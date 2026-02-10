@@ -6,25 +6,29 @@
   <link rel="icon" href="/favicon.ico" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Rhythmish">
+  <link rel="apple-touch-icon" href="/rhythmish_192x192.png">
   <title>Rhythmish | AI Mood Music</title>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(reg => console.log('PWA 서비스 워커 등록 성공!'))
-          .catch(err => console.log('등록 실패:', err));
-      });
-    }
-  </script>
 </head>
 
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+          .then(reg => console.log('PWA Service Worker registered!', reg))
+          .catch(err => console.log('Registration failed:', err));
+      });
+    }
+  </script>
 </body>
 
 </html>
