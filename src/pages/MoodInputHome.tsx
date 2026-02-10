@@ -171,7 +171,7 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                         <textarea
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 min-h-40 placeholder:text-slate-400 dark:placeholder:text-white/30 p-5 text-base font-normal leading-relaxed shadow-sm transition-all pb-12"
+                            className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 min-h-[144px] placeholder:text-slate-400 dark:placeholder:text-white/30 p-5 text-base font-normal leading-relaxed shadow-sm transition-all pb-12"
                             placeholder="I'm feeling a bit stressed but want something to help me focus..."
                         />
                         <div className="absolute bottom-3 right-3 flex items-center gap-2">
@@ -189,7 +189,7 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                     </div>
                     <button
                         onClick={() => (text || imageFile) && onAnalyze(text, imageFile || undefined)}
-                        className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-primary text-white text-base font-bold leading-normal tracking-wide shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+                        className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-[50px] px-5 bg-primary text-white text-base font-bold leading-normal tracking-wide shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
                         disabled={!text && !imageFile}
                     >
                         <span className="material-symbols-outlined mr-2">psychology</span>

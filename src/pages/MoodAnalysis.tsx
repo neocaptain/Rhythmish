@@ -49,7 +49,7 @@ const MoodAnalysis: React.FC<MoodAnalysisProps> = ({ onComplete, onCancel }) => 
 
                 {/* Central Visual Element */}
                 <div className="relative z-10 flex flex-col items-center">
-                    <div className="relative w-64 h-64 flex items-center justify-center">
+                    <div className="relative w-32 h-32 flex items-center justify-center">
                         {/* Outer Rings */}
                         <motion.div
                             animate={{ scale: [1.1, 1.2, 1.1] }}
@@ -59,14 +59,14 @@ const MoodAnalysis: React.FC<MoodAnalysisProps> = ({ onComplete, onCancel }) => 
                         <motion.div
                             animate={{ scale: [1, 1.1, 1] }}
                             transition={{ repeat: Infinity, duration: 2 }}
-                            className="absolute inset-4 border border-primary/40 rounded-full"
+                            className="absolute inset-2 border border-primary/40 rounded-full"
                         />
                         {/* Core Icon */}
-                        <div className="relative w-40 h-40 bg-primary/20 backdrop-blur-2xl rounded-full flex items-center justify-center border border-primary/30 glow-effect">
+                        <div className="relative w-24 h-24 bg-primary/20 backdrop-blur-2xl rounded-full flex items-center justify-center border border-primary/30 glow-effect">
                             <motion.span
                                 animate={{ rotateY: [0, 180, 360] }}
                                 transition={{ repeat: Infinity, duration: 6, ease: "linear" }}
-                                className="material-symbols-outlined text-primary text-[80px] leading-none"
+                                className="material-symbols-outlined text-primary text-[40px] leading-none"
                             >
                                 psychology
                             </motion.span>
@@ -75,28 +75,28 @@ const MoodAnalysis: React.FC<MoodAnalysisProps> = ({ onComplete, onCancel }) => 
                         <motion.div
                             animate={{ y: [0, -10, 0], x: [0, 5, 0] }}
                             transition={{ repeat: Infinity, duration: 3 }}
-                            className="absolute top-0 right-0 p-2 bg-white/10 backdrop-blur-lg rounded-full border border-white/20"
+                            className="absolute top-0 right-0 p-1.5 bg-white/10 backdrop-blur-lg rounded-full border border-white/20"
                         >
-                            <span className="material-symbols-outlined text-primary text-sm">music_note</span>
+                            <span className="material-symbols-outlined text-primary text-[10px]">music_note</span>
                         </motion.div>
                         <motion.div
                             animate={{ y: [0, 10, 0], x: [0, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 4 }}
-                            className="absolute bottom-8 left-0 p-2 bg-white/10 backdrop-blur-lg rounded-full border border-white/20"
+                            className="absolute bottom-4 left-0 p-1.5 bg-white/10 backdrop-blur-lg rounded-full border border-white/20"
                         >
-                            <span className="material-symbols-outlined text-blue-400 text-sm">auto_awesome</span>
+                            <span className="material-symbols-outlined text-blue-400 text-[10px]">auto_awesome</span>
                         </motion.div>
                     </div>
 
                     {/* Text Content */}
-                    <div className="mt-12 text-center space-y-4 max-w-xs">
-                        <h1 className="text-slate-900 dark:text-white text-3xl font-bold tracking-tight">Analyzing your emotions...</h1>
-                        <p className="text-slate-500 dark:text-white/60 text-lg font-medium leading-relaxed italic">Finding the perfect melody for you...</p>
+                    <div className="mt-6 text-center space-y-2 max-w-xs">
+                        <h1 className="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">Analyzing your emotions...</h1>
+                        <p className="text-slate-500 dark:text-white/60 text-base font-medium leading-relaxed italic">Finding the perfect melody for you...</p>
                     </div>
                 </div>
 
                 {/* Progress Information Card */}
-                <div className="mt-16 w-full max-w-sm z-10">
+                <div className="mt-8 w-full max-w-sm z-10">
                     <div className="bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl">
                         <div className="flex justify-between items-end mb-3">
                             <div className="flex flex-col">

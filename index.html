@@ -11,7 +11,15 @@
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet" />
-
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('PWA 서비스 워커 등록 성공!'))
+          .catch(err => console.log('등록 실패:', err));
+      });
+    }
+  </script>
 </head>
 
 <body>
@@ -20,12 +28,3 @@
 </body>
 
 </html>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => console.log('PWA 서비스 워커 등록 성공!'))
-        .catch(err => console.log('등록 실패:', err));
-    });
-  }
-</script>
