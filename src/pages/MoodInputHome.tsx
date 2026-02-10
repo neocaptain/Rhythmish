@@ -17,6 +17,7 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            console.log("Auth state changed:", currentUser?.email);
             setUser(currentUser);
         });
         return () => unsubscribe();
@@ -24,6 +25,7 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
 
     const handleLogin = async () => {
         try {
+            console.log("Login button clicked, triggering popup...");
             await signInWithPopup(auth, googleProvider);
         } catch (error) {
             console.error("Login failed:", error);
@@ -77,11 +79,8 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
         const file = event.target.files?.[0];
         if (file) {
             setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            // Auto-analyze when image is uploaded
+            onAnalyze(text, file);
         }
     };
 
@@ -95,13 +94,6 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
         setImagePreview(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
-
-    const quickMoods = [
-        { label: 'Energetic', icon: '🔥' },
-        { label: 'Calm', icon: '🌊' },
-        { label: 'Lofi', icon: '🌙' },
-        { label: 'Grunge', icon: '🎸' },
-    ];
 
     return (
         <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
@@ -130,15 +122,18 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                     {user ? (
                         <button
                             onClick={handleLogout}
-                            className="flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                            className="relative z-10 flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                             title="Logout"
                         >
                             <span className="material-symbols-outlined text-[20px]">logout</span>
                         </button>
                     ) : (
                         <button
-                            onClick={handleLogin}
-                            className="flex px-3 py-1.5 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors"
+                            onClick={() => {
+                                console.log("Login button clicked");
+                                handleLogin();
+                            }}
+                            className="relative z-10 flex px-3 py-1.5 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors"
                         >
                             Login
                         </button>
@@ -253,22 +248,6 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                         )}
                     </div>
                 </button>
-
-                {/* Quick Mood Chips */}
-                <div className="mt-2 text-left">
-                    <p className="text-slate-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest mb-3 px-1">Quick Moods</p>
-                    <div className="flex flex-wrap gap-2">
-                        {quickMoods.map((mood) => (
-                            <button
-                                key={mood.label}
-                                onClick={() => setText(mood.label)}
-                                className="px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all"
-                            >
-                                {mood.icon} {mood.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
             </div>
 
             {/* Background Glows */}

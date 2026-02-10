@@ -21,7 +21,8 @@ export interface SongRecommendation {
   artist: string;
   matchScore: number;
   tags: string[];
-  thumbnail: string;
+  youtubeVideoId: string; // YouTube video ID for thumbnail generation
+  thumbnail: string; // Deprecated, will be generated from youtubeVideoId
   duration: string;
   searchQuery: string;
 }
@@ -34,7 +35,11 @@ export interface AnalysisResult {
 }
 
 export async function analyzeMood(userInput: string, imageFile?: File): Promise<AnalysisResult> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // Fallback to gemini-pro/vision as 1.5-flash is returning 404
+  // const modelName = imageFile ? "gemini-1.5-flash" : "gemini-pro";
+  // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // 'gemini-1.5-flash' 대신 'models/gemini-1.5-flash'라고 적어보세요.
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
     Analyze the following user mood description ${imageFile ? "and the provided image" : ""} and provide a structured JSON response for a music recommendation app called "Rhythmish".
@@ -56,7 +61,8 @@ export async function analyzeMood(userInput: string, imageFile?: File): Promise<
           "artist": "Artist Name",
           "matchScore": 99,
           "tags": ["#Tag1", "#Tag2"],
-          "thumbnail": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=60",
+          "youtubeVideoId": "11-character-id",
+          "thumbnail": "",
           "duration": "3:45",
           "searchQuery": "Artist - Song Title official audio"
         }
@@ -65,8 +71,16 @@ export async function analyzeMood(userInput: string, imageFile?: File): Promise<
 
     Choose exactly 3 emotions that best fit the mood.
     Provide 3-5 song recommendations.
-    For the thumbnail, use high-quality music/nature related Unsplash URLs or placeholder music art URLs.
-    Ensure values are realistic.
+    
+    CRITICAL INSTRUCTIONS for YouTube recommendations:
+    1. Only recommend REAL, well-known songs that exist on YouTube.
+    2. Always provide a perfect 'searchQuery' (e.g., 'Artist Name - Song Title official music video') that reflects the headline and emotions discovered.
+    3. The 'searchQuery' should be optimized for YouTube search to find the most relevant official video or high-quality audio.
+    4. Leave 'youtubeVideoId' as an empty string - the system will fetch it using your search query via YouTube API.
+    5. Leave 'thumbnail' as an empty string.
+    
+    Each song MUST have different metadata.
+    Ensure matchScore values vary between songs (e.g., 95%, 88%, 82%).
     Return ONLY the raw JSON string.
   `;
 

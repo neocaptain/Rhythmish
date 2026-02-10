@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { AnalysisResult } from '../services/ai';
+import { getMoodImageDetailed } from '../services/unsplash';
 
 interface EmotionResultProps {
     result: AnalysisResult;
@@ -10,6 +11,23 @@ interface EmotionResultProps {
 
 const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendations, onBack }) => {
     const { headline, emotions, summary } = result;
+    const [moodImage, setMoodImage] = useState<string>('');
+
+    useEffect(() => {
+        // Fetch mood-related image based on the headline
+        const fetchMoodImage = async () => {
+            console.log('EmotionResult: Fetching image for headline:', headline);
+            const imageUrl = await getMoodImageDetailed(headline);
+            console.log('EmotionResult: Setting moodImage to:', imageUrl);
+            setMoodImage(imageUrl);
+        };
+        fetchMoodImage();
+    }, [headline]);
+
+    // Log whenever moodImage changes
+    useEffect(() => {
+        console.log('EmotionResult: moodImage state updated to:', moodImage);
+    }, [moodImage]);
 
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300 overflow-y-auto no-scrollbar pb-32">
@@ -34,24 +52,15 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
                         className="relative w-full aspect-square rounded-3xl overflow-hidden flex items-center justify-center group"
                     >
                         {/* Background Art */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 to-indigo-500/30 opacity-60"></div>
-                        <div
-                            className="absolute inset-0 bg-center bg-no-repeat bg-cover scale-110 blur-sm opacity-40"
-                            style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=800&auto=format&fit=crop&q=60")' }}
-                        />
-                        {/* Main Emoji */}
-                        <div className="relative z-10 flex flex-col items-center">
-                            <motion.div
-                                animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-                                transition={{ repeat: Infinity, duration: 4 }}
-                                className="text-[120px] filter drop-shadow-2xl"
-                            >
-                                🔮
-                            </motion.div>
-                            <div className="mt-4 px-4 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-medium uppercase tracking-widest text-white">
-                                Mood Profile
-                            </div>
-                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 to-indigo-500/30 opacity-30"></div>
+                        {moodImage ? (
+                            <div
+                                className="absolute inset-0 bg-center bg-no-repeat bg-cover scale-110 opacity-70"
+                                style={{ backgroundImage: `url("${moodImage}")` }}
+                            />
+                        ) : (
+                            <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+                        )}
                         {/* Glow effect */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary rounded-full blur-[80px] opacity-30"></div>
                     </motion.div>
