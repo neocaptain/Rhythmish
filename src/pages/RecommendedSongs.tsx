@@ -42,7 +42,6 @@ const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, onBack, onR
         }
 
         // Fallback to Unsplash based on song keywords
-        const keywords = encodeURIComponent(`${song.artist} ${song.title} music`);
         return song.thumbnail || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=60';
     };
 
