@@ -1,19 +1,184 @@
-name: Deploy to Firebase Hosting on merge
-on:
-  push:
-    branches:
-      - main
-jobs:
-  build_and_deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm ci && npm run build
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_RHYTHMISH }}'
-          channelId: live
-          projectId: rhythmish-ed2a0
+1. [페이지] "몽글이의 보물상자" (My Playlist)
+	- 사용자가 '좋아요'를 누른 곡들만 따로 모아볼 수 있는 페이지입니다.
+	- 기능: 내가 좋아한 노래들을 한눈에 보고 바로 유튜브로 재생할 수 있는 리스트입니다.
+	- 사용자 심리: "내가 예전에 기분 좋았을 때 들었던 노래가 뭐였지?" 하고 다시 찾아오게 만드는 재방문 요소가 됩니다.
+	- 개발 팁: Firebase의 Firestore 데이터베이스에 사용자 ID별로 liked_songs 리스트를 저장하면 간단히 구현할 수 있습니다.
+
+2. [기능] 기분별 맞춤 "감정 히스토리 분석"
+단순히 노래만 저장하는 게 아니라, **좋아요를 누를 당시의 기분(몽글이의 분석 결과)**을 함께 기록하는 것입니다.
+
+아이디어: "사용자님은 '슬플 때' 주로 이런 비트의 노래에 좋아요를 누르시네요!" 같은 리포트를 제공합니다.
+
+추가 페이지: '나의 감정 온도계' 같은 대시보드를 만들어, 한 달 동안 어떤 기분일 때 어떤 노래를 가장 많이 들었는지 그래프로 보여줍니다.
+
+3. [커뮤니티] "몽글이들의 실시간 픽" (인기 차트)
+개인 저장소에서 한 걸음 더 나아가 다른 사용자들과 연결되는 기능입니다.
+
+기능: 현재 다른 유저들이 가장 많이 '좋아요'를 누른 노래 TOP 10을 메인 화면에 띄워줍니다.
+
+효과: "나랑 비슷한 기분인 다른 사람들은 뭘 듣지?"라는 호기심을 자극합니다. 익명성이 보장된 상태에서 '동질감'을 느끼게 해주어 앱의 체류 시간을 높입니다.
+
+ 1인 개발자를 위한 구현 우선순위
+사용자님의 현재 개발 속도를 고려했을 때 아래 순서로 확장해 보시는 건 어떨까요?
+
+1순위 (My Page): '좋아요'를 누르면 Firestore에 저장하고, 별도의 탭에서 내가 찜한 목록 보여주기.
+
+2순위 (Mood Tag): 좋아요 버튼 옆에 당시의 감정 아이콘(몽글이 캐릭터)을 작게 표시하기.
+
+3순위 (Share): 내가 만든 기분별 플레이리스트를 이미지로 저장해 인스타그램 스토리에 공유하는 기능 추가 (앱 홍보 효과!).
+
+
+collectionID : liked_songs
+document id : auto id
+field:
+	1. userId: string,     
+	2. title: string,   
+	3. artist: string,
+	4. matchScore: number,
+	5. youtubeVideoId: string,
+	6. songMoods: array[label: string, value : number]
+	7. userMood: array[emotion: string, score : number]
+	8. tags: array[String]
+	8. duration: string;
+	6. createdAt: timestamp
+
+i
+  emotions: Emotion[]; // Breakdown for this specific song
+  tags: string[];
+
+  searchQuery: string;
+  
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if
+          request.time < timestamp.date(2026, 3, 13);
+    }
+  }
+}
+
+RecommendedSongs 페이지에서 "좋아요"을 클릭하면 클릭한 노래 정보를 firestore에 저장하게 하고싶어
+LikeButton.tsx 이라는 파일로 다음 소스를 참조하면 좋을 것 같아
+matchScore는 꼭 숫자(Number)로, tags는 문자열 배열로 전달되도록 로직을 구성해야 돼.
+
+import { db, auth } from "../services/firebase"; // 설정하신 firebase 파일 경로
+import { collection, addDoc, serverTimestamp } from "../services/firebase/firestore";
+
+// 데이터 저장을 위한 함수
+const saveLikedSong = async (songData: any) => {
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.error("로그인이 필요합니다.");
+    return;
+  }
+
+  try {
+    // collectionID: liked_songs
+    const docRef = await addDoc(collection(db, "liked_songs"), {
+      // 1. userId: 현재 로그인한 사용자의 고유 ID
+      userId: user.uid,
+      
+      // 2~5. 노래 기본 정보
+      title: songData.title,
+      artist: songData.artist,
+      matchScore: songData.matchScore,
+      youtubeVideoId: songData.youtubeVideoId,
+
+      // 6. songMoods: [ { label: "Joy", value: 80 }, ... ]
+      songMoods: songData.songMoods,
+
+      // 7. userMood: [ { emotion: "Joy", score: 90 }, ... ]
+      userMood: songData.userMood,
+
+      // 8. tags & duration
+      tags: songData.tags,
+      duration: songData.duration,
+
+      // 9. createdAt: 서버 시간 기준 타임스탬프
+      createdAt: serverTimestamp() 
+    });
+
+    console.log("문서 생성 완료! ID: ", docRef.id); // 이게 바로 Auto ID입니다.
+    alert("몽글이의 보물상자에 저장되었습니다! ");
+  } catch (error) {
+    console.error("데이터 저장 중 오류 발생: ", error);
+  }
+};
+
+그리고 사용자가 선택한 favorite song list 페이지도 만들어야 하는데 stitch로 만든 소스를 zip파일로 올려놓았어
+C:\Users\obzen NT-047\Saved Games\전유영\favoriteSongList.zip
+사용자의 좋아요를 클릭한 노래 목록을 보여주는 로직은 다음 코드를 참고하면 좋을 것 같아
+
+import { useState, useEffect } from "react";
+import { db, auth } from "./firebase";
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot 
+} from "firebase/firestore";
+
+const LikedSongsList = () => {
+  const [songs, setSongs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // 1. 쿼리 작성: 내 userId와 일치하는 문서를 생성일 역순으로 가져오기
+    const q = query(
+      collection(db, "liked_songs"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    // 2. 리얼타임 리스너 (onSnapshot): 데이터가 바뀌면 화면이 자동으로 업데이트됨
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const songsArray: any[] = [];
+      querySnapshot.forEach((doc) => {
+        songsArray.push({ id: doc.id, ...doc.data() });
+      });
+      
+      setSongs(songsArray);
+      setLoading(setLoading(false));
+    }, (error) => {
+      console.error("데이터 불러오기 실패: ", error);
+      setLoading(false);
+    });
+
+    // 컴포넌트 언마운트 시 리스너 해제
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) return <div>몽글이가 보물상자를 열고 있어요... 🐾</div>;
+
+  return (
+    <div className="song-list">
+      {songs.length === 0 ? (
+        <p>아직 저장된 노래가 없어요. 하트를 눌러보세요! 💖</p>
+      ) : (
+        songs.map((song) => (
+          <div key={song.id} className="song-card">
+            <img src={`https://img.youtube.com/vi/${song.youtubeVideoId}/mqdefault.jpg`} alt="thumbnail" />
+            <h3>{song.title} - {song.artist}</h3>
+            <p>기분 매칭 점수: {song.matchScore}%</p>
+            {/* 태그 출력 예시 */}
+            <div className="tags">
+              {song.tags?.map((tag: string) => <span key={tag}>#{tag} </span>)}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+앱하단에 discover와 profile 아이콘에 연결된 Discover 페이지와 Profile 페이지를 stitch로 먼들어서 "C:\Users\obzen NT-047\Saved Games\전유영\discover_profile.zip"에 저장했어.
+Discover 페이지: '유튜브 인기 급상승 음악'을 가로형 캐러셀로 보여주며, 하단에는 '지금 다른 유저들이 많이 듣는 기분 테마(예: 새벽 감성, 비 오는 날)'를 실시간 통계와 함께 제공하여 트렌드를 한눈에 파악할 수 있습니다.
+Profile 페이지: '감정 캘린더'를 통해 한 달간의 기분 변화를 색상이나 이모지로 시각화하고, 이번 달 감정 통계(행복 70% 등)를 요약해 보여줍니다. 하단에는 '첫 분석 완료'와 같은 성취감을 주는 뱃지 시스템을 배치했습니다.
+이 두 페이지가 잘 동작하도록 만들어 줘

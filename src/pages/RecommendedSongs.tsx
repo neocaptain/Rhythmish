@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AnalysisResult, SongRecommendation } from '../services/ai';
 import { searchYouTubeVideo } from '../services/youtube';
+import LikeButton from '../components/LikeButton';
 
 interface RecommendedSongsProps {
     result: AnalysisResult;
@@ -95,9 +96,10 @@ const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, onBack, onR
                                     style={{ backgroundImage: `url('${getYouTubeThumbnail(song)}')` }}
                                 />
                                 <div className="absolute inset-0 bg-black/20"></div>
-                                <button className="absolute top-3 left-3 size-9 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10 active:scale-90 transition-transform z-10">
-                                    <span className="material-symbols-outlined text-[20px]">favorite</span>
-                                </button>
+                                <LikeButton
+                                    song={song}
+                                    userMood={result.emotions}
+                                />
                                 <button
                                     onClick={() => setSelectedSong(song)}
                                     className="absolute top-3 right-3 bg-primary text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 backdrop-blur-md hover:bg-primary/90 transition-colors cursor-pointer active:scale-95"
@@ -174,29 +176,54 @@ const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, onBack, onR
                                     <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
                                 </button>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <div>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Your Mood Profile</p>
-                                    <div className="space-y-3">
-                                        {result.emotions.map((emotion, idx) => (
-                                            <div key={emotion.label} className="space-y-1.5">
-                                                <div className="flex justify-between items-center text-sm">
-                                                    <span className="font-semibold flex items-center gap-2">
-                                                        <span className={`material-symbols-outlined ${emotion.color} text-base`}>{emotion.icon}</span>
-                                                        {emotion.label}
-                                                    </span>
-                                                    <span className="text-slate-500 dark:text-slate-400 font-bold text-xs">{emotion.value}%</span>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-2 rounded-full bg-primary/40"></div>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Your Mood</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-2 rounded-full bg-primary"></div>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Song Profile</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-5">
+                                        {result.emotions.map((userEmotion, idx) => {
+                                            const songEmotion = selectedSong.emotions.find(e => e.label === userEmotion.label);
+                                            return (
+                                                <div key={userEmotion.label} className="space-y-2">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm font-bold flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                                                            <span className={`material-symbols-outlined ${userEmotion.color} text-base`}>{userEmotion.icon}</span>
+                                                            {userEmotion.label}
+                                                        </span>
+                                                        <div className="flex gap-4">
+                                                            <span className="text-[10px] font-black text-slate-400">{userEmotion.value}%</span>
+                                                            <span className="text-[10px] font-black text-primary">{songEmotion?.value || 0}%</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                        {/* User Bar (Background/Ghost) */}
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${userEmotion.value}%` }}
+                                                            transition={{ delay: idx * 0.1, duration: 0.8 }}
+                                                            className="absolute inset-y-0 left-0 bg-primary/20 rounded-full"
+                                                        />
+                                                        {/* Song Bar (Foreground/Active) */}
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${songEmotion?.value || 0}%` }}
+                                                            transition={{ delay: idx * 0.1 + 0.2, duration: 0.8 }}
+                                                            className="absolute inset-y-0 left-0 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]"
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                                    <motion.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${emotion.value}%` }}
-                                                        transition={{ delay: idx * 0.1, duration: 0.6 }}
-                                                        className="h-full bg-primary rounded-full"
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                                 <div className="pt-2 border-t border-slate-200 dark:border-white/10">

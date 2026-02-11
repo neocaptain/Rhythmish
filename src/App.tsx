@@ -4,10 +4,13 @@ import MoodInputHome from './pages/MoodInputHome';
 import MoodAnalysis from './pages/MoodAnalysis';
 import EmotionResult from './pages/EmotionResult';
 import RecommendedSongs from './pages/RecommendedSongs';
+import FavoriteSongs from './pages/FavoriteSongs';
+import Discover from './pages/Discover';
+import Profile from './pages/Profile';
 import { analyzeMood } from './services/ai';
 import type { AnalysisResult } from './services/ai';
 
-type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS';
+type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS' | 'FAVORITES' | 'DISCOVER' | 'PROFILE';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>('HOME');
@@ -43,6 +46,51 @@ const App: React.FC = () => {
     setAnalysisResult(null);
   };
 
+  const handleShowFavorites = () => {
+    setState('FAVORITES');
+  };
+
+  const handleShowDiscover = () => {
+    setState('DISCOVER');
+  }
+
+  const handleShowProfile = () => {
+    setState('PROFILE');
+  }
+
+  const renderBottomNav = () => (
+    <div className="flex items-center justify-around border-t border-slate-100 dark:border-white/5 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 pb-8 shrink-0">
+      <button
+        onClick={() => setState('HOME')}
+        className={`flex flex-col items-center gap-1 transition-colors ${state === 'HOME' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+      >
+        <span className={`material-symbols-outlined ${state === 'HOME' ? 'fill-[1]' : ''}`}>home</span>
+        <span className="text-[10px] font-bold">Home</span>
+      </button>
+      <button
+        onClick={handleShowDiscover}
+        className={`flex flex-col items-center gap-1 transition-colors ${state === 'DISCOVER' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+      >
+        <span className={`material-symbols-outlined ${state === 'DISCOVER' ? 'fill-[1]' : ''}`}>explore</span>
+        <span className="text-[10px] font-medium">Discover</span>
+      </button>
+      <button
+        onClick={handleShowFavorites}
+        className={`flex flex-col items-center gap-1 transition-colors ${state === 'FAVORITES' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+      >
+        <span className={`material-symbols-outlined ${state === 'FAVORITES' ? 'fill-[1]' : ''}`}>favorite</span>
+        <span className="text-[10px] font-medium">Favorites</span>
+      </button>
+      <button
+        onClick={handleShowProfile}
+        className={`flex flex-col items-center gap-1 transition-colors ${state === 'PROFILE' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+      >
+        <span className={`material-symbols-outlined ${state === 'PROFILE' ? 'fill-[1]' : ''}`}>person</span>
+        <span className="text-[10px] font-medium">Profile</span>
+      </button>
+    </div>
+  );
+
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen">
@@ -59,29 +107,12 @@ const App: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="h-full"
+              className="h-full flex flex-col"
             >
-              <MoodInputHome onAnalyze={handleAnalyze} />
-
-              {/* Bottom Navigation (Only on Home) */}
-              <div className="mt-auto flex items-center justify-around border-t border-slate-100 dark:border-white/5 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 pb-8">
-                <button className="flex flex-col items-center gap-1 text-primary">
-                  <span className="material-symbols-outlined fill-[1]">home</span>
-                  <span className="text-[10px] font-bold">Home</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 text-slate-400">
-                  <span className="material-symbols-outlined">explore</span>
-                  <span className="text-[10px] font-medium">Discover</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 text-slate-400">
-                  <span className="material-symbols-outlined">history</span>
-                  <span className="text-[10px] font-medium">History</span>
-                </button>
-                <button className="flex flex-col items-center gap-1 text-slate-400">
-                  <span className="material-symbols-outlined">settings</span>
-                  <span className="text-[10px] font-medium">Settings</span>
-                </button>
+              <div className="flex-1 overflow-y-auto no-scrollbar">
+                <MoodInputHome onAnalyze={handleAnalyze} />
               </div>
+              {renderBottomNav()}
             </motion.div>
           )}
 
@@ -129,6 +160,53 @@ const App: React.FC = () => {
                 onBack={() => setState('RESULT')}
                 onRefresh={handleBackToHome}
               />
+            </motion.div>
+          )}
+
+          {state === 'FAVORITES' && (
+            <motion.div
+              key="favorites"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="h-full flex flex-col"
+            >
+              <div className="flex-1 overflow-hidden">
+                <FavoriteSongs
+                  onBack={handleBackToHome}
+                />
+              </div>
+              {renderBottomNav()}
+            </motion.div>
+          )}
+
+          {state === 'DISCOVER' && (
+            <motion.div
+              key="discover"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="h-full flex flex-col"
+            >
+              <div className="flex-1 overflow-hidden">
+                <Discover />
+              </div>
+              {renderBottomNav()}
+            </motion.div>
+          )}
+
+          {state === 'PROFILE' && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="h-full flex flex-col"
+            >
+              <div className="flex-1 overflow-hidden">
+                <Profile onBack={handleBackToHome} />
+              </div>
+              {renderBottomNav()}
             </motion.div>
           )}
         </AnimatePresence>

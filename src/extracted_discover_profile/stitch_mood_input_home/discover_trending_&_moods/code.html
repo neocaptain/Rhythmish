@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Discover Trending &amp; Moods</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f0df2",
+                        "background-light": "#f7f5f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-primary/10">
+<h1 class="text-2xl font-bold tracking-tight">Discover</h1>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons-round">search</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="User profile avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAF7XDm_-t5Yi7TeC7Gr8I0rjgxQPbuMp32YRDQXN6MUAsJt5ugPt4o68O0Cv5QHaH3DpcuSu6PKasH7g0OokMb3tlvknQLuO0600RiiLH1-WIwRdammKm1i2uYX-8EVZUrlgjI0mlCmrpf7NLPxHDjMFcJE54wHcvdxu2DcG2LE7jejv9eWufGbzOGVDvYrvi2sSVRnVOauCFFd4FkAxf9FeVVkoGh95awDqtWEBpvsL_hk3-nmi9sVn4ZHaEfBUz9zK8A-ArAVIBW"/>
+</div>
+</div>
+</header>
+<!-- Trending Now on YouTube Section -->
+<section class="mt-6">
+<div class="px-6 flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="text-primary material-icons-round">trending_up</span>
+                Trending on YouTube
+            </h2>
+<button class="text-primary text-sm font-semibold">View All</button>
+</div>
+<div class="flex overflow-x-auto pb-4 gap-4 px-6 no-scrollbar snap-x">
+<!-- Trending Card 1 -->
+<div class="flex-none w-80 snap-start">
+<div class="relative group rounded-xl overflow-hidden mb-3 aspect-video shadow-lg">
+<img alt="Music Video" class="w-full h-full object-cover" data-alt="High energy music video cinematic stage" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe_jDgaHQ6Pa2jNdgWNUp60wPszoo8APWYnyJw_2DYjIc5JiIsjngGWhiw8AhJtVD28IPi7SvJPynrXHY3zNLoNk2Q5Rifua_7z_DetsF07n04K_-2gEbQqWQIVXJIqaudVz-nUFokB6EbX6zt2pg9XA0g-lsbzFA4OkkLEK8k9AUjc7DKou5xOqjCyIiDbYThwahyyowc5ckKEExChiK4PvSe5lxPo9O7ppcD5Ohx_hbqL3Z_OYds4zV3lTYYehwYsXgjAPoNRxwS"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-2 py-1">
+<span class="text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-xs text-red-500">visibility</span> 4.2M
+                        </span>
+</div>
+<button class="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-icons-round text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-bold text-lg leading-tight truncate">Midnight Neon Streets</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Synthetic Dreams • 2 days ago</p>
+</div>
+<!-- Trending Card 2 -->
+<div class="flex-none w-80 snap-start">
+<div class="relative group rounded-xl overflow-hidden mb-3 aspect-video shadow-lg">
+<img alt="Music Video" class="w-full h-full object-cover" data-alt="Acoustic guitar performance in soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXnOvDzjrmx30fkH9YpAvcO2WNY27rFc0tRTnDQEqFJUYwWuO94DlH5TFV3AsIFV7-o_UDxsigfI7JEEHk2aX0Jowl4zSyWMu6poQi1NAxy_yPDNcjG8xBmCm5_1Sn0FuVVbs8lloyzgnXGxu9EyZw0E2fuqpA3Ge0xBH4aTuB-jPgkgxStXDTH7of8C6uLrHY2ny5bA7_-ZcCRGP977UKLFBkg-vRaK8EtJMr6cCzj2fBn9DYCY0zWVsGtXsJDMIq22Vt6khRzyyF"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-2 py-1">
+<span class="text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-xs text-red-500">visibility</span> 1.8M
+                        </span>
+</div>
+<button class="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-icons-round text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-bold text-lg leading-tight truncate">Echoes of the Valley</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Luna Ray • 1 week ago</p>
+</div>
+<!-- Trending Card 3 -->
+<div class="flex-none w-80 snap-start">
+<div class="relative group rounded-xl overflow-hidden mb-3 aspect-video shadow-lg">
+<img alt="Music Video" class="w-full h-full object-cover" data-alt="Abstract dj controller with colorful lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVEMqYjuSGGz1AGlRCTsWo_ipvWQrJWbpUdF196EojJl5ftcy1kOw62d1JxUkLC3bRT-AIu4Z2YWw-WSxcCCukSvQYio09CifDG4pg7yh-FxWDt3Sbz7WgTGl02QY6yP6cJwePFmugHlXRaIwSSa7XkXx6uqGpoEFNpFjyo04xqpR0QOVGaoXpIkgldshwseJFTJxM7Kbi7dXtvFb59hXH7Eu-qulfljTTMaXkEaSIv2MMU88IvGT-hycpKiNCZzF-xtDOUNHN5Ozl"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-2 py-1">
+<span class="text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-xs text-red-500">visibility</span> 920K
+                        </span>
+</div>
+<button class="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-icons-round text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-bold text-lg leading-tight truncate">Frequency Pulse</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Deep Logic • 3 days ago</p>
+</div>
+</div>
+</section>
+<!-- AI Mood Recommendation Banner -->
+<div class="px-6 py-4">
+<div class="bg-primary rounded-xl p-4 flex items-center justify-between text-white shadow-lg shadow-primary/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+<span class="material-icons-round">auto_awesome</span>
+</div>
+<div>
+<h4 class="font-bold">Personalized Discovery</h4>
+<p class="text-white/80 text-xs">AI has selected 5 new songs for your vibe.</p>
+</div>
+</div>
+<button class="bg-white text-primary px-3 py-1.5 rounded-lg text-sm font-bold">Tune In</button>
+</div>
+</div>
+<!-- Community Moods Section -->
+<section class="mt-4 px-6 pb-8">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="text-primary material-icons-round">bubble_chart</span>
+                Real-time Moods
+            </h2>
+<div class="flex items-center gap-1 text-xs font-medium text-slate-500">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                LIVE
+            </div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Mood Card 1 -->
+<div class="relative aspect-square rounded-xl overflow-hidden group">
+<img alt="Rainy Mood" class="w-full h-full object-cover" data-alt="Rainy window with city lights at night" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrksx3Lfy94Fb3AiTQYSc1wAKREFR2rtUZ6BWhAIap7oqRNXhoVVJf4dD5XnGinaXSDHQbY1y6495onCYLLMG0L7DM9PG5aBTDLWCl9Cg_BarLfdzuJXVWnHKDC2c94wQvqO_URScKQSBvPXVMFoz_VQvHdyfBPPbWfimW6up3xlbCDW8nEbcFfqjclKcM0ZncNYt5LXOdu0-IsPB3aUf_V4pZoE2uGPxGST_1IVVzti2Aj5TYlZ_fxhbwTaA1akvoUjDgO1pEbFQx"/>
+<div class="absolute inset-0 bg-gradient-to-br from-blue-900/60 to-primary/40"></div>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<span class="self-start px-2 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-[10px]">person</span> 2.4k listening
+                    </span>
+<div>
+<h3 class="text-white font-bold text-lg">Rainy Day Melodies</h3>
+<p class="text-white/70 text-xs">Soft piano &amp; lo-fi</p>
+</div>
+</div>
+</div>
+<!-- Mood Card 2 -->
+<div class="relative aspect-square rounded-xl overflow-hidden group">
+<img alt="Late Night Mood" class="w-full h-full object-cover" data-alt="Purple and orange sunset aesthetic horizon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCgmYkx8iXmssXKikrC_oIHf6ixlHdGFgvgTQfvCkK-km0Y56__mePet6vRw2ElUFG1k94rdbWxGZhl407VFiTMFSBx0sCvHugtEGq5qyAHxyqpQWPWSqf797QgAj1_z_NqRXWXWPkwVhxHIDkEgvjfWWGjMarQVztMZC8OejEmynzNsiJEca0bjdS5aql1QLo6NAqckUZjX70fCsgiGXui8tonFA2iyl882SUqxaHPD1x-1HqvMfe3dG8KZY6Oox7dp8cYFgOhyES"/>
+<div class="absolute inset-0 bg-gradient-to-br from-indigo-900/60 to-purple-800/40"></div>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<span class="self-start px-2 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-[10px]">person</span> 8.1k listening
+                    </span>
+<div>
+<h3 class="text-white font-bold text-lg">Late Night Vibes</h3>
+<p class="text-white/70 text-xs">Deep house &amp; techno</p>
+</div>
+</div>
+</div>
+<!-- Mood Card 3 -->
+<div class="relative aspect-square rounded-xl overflow-hidden group">
+<img alt="Focus Mood" class="w-full h-full object-cover" data-alt="Minimal laptop workspace with coffee mug" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiGrTDqdBQN-Xt2KjDNMOxUxLUe7lys8qj8W008Dni7Qb_TDvEPY1NzvGTSTJFCgS7PWly5qMhwC4Kry7FJzN-QLo20rI7fwD7EKeY8rU7ct3AEwnUzYOHbp9-OkZcw6PDrxVUZpgmSzIvqORotti1v32bHTM5vSUEBWfqgNRse6vEHo-EPSq4DEGjukRiGapin1IIcyAAS6zqYaCrM3eEAAmuZh1tzp3L9PHycVOltU0lbhX_hOK_VTyJiC6IvXdRU46ZIWfuW1Yp"/>
+<div class="absolute inset-0 bg-gradient-to-br from-primary/60 to-slate-900/40"></div>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<span class="self-start px-2 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-[10px]">person</span> 1.2k listening
+                    </span>
+<div>
+<h3 class="text-white font-bold text-lg">Deep Focus</h3>
+<p class="text-white/70 text-xs">Ambient soundscapes</p>
+</div>
+</div>
+</div>
+<!-- Mood Card 4 -->
+<div class="relative aspect-square rounded-xl overflow-hidden group">
+<img alt="Nostalgia Mood" class="w-full h-full object-cover" data-alt="Sunlight hitting a vintage turntable record" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAubU4SkxnAJSCi8OrcfjvNyQQEuU6Ob3pH9gWRN7hCzX5YjSTxhcFi0hDtfPfpo7cwiJoW-u_4goPHByPpqvnR4VnJiL8IkcpgKRCPr-nXD8-Ma0jzxMBU1YKadkfG4ncG3SEhJGRl4uv4iKFPg8L_nri2W3hR1wumpT0egA1xQve3FABh94zuueO7_2UAH2yPSUlJgB8HGQ2sHdW5unLDGF8P9ytls2MbWYhGuSeSUafH3KdA7FBjrlYBmfpRSLRVwHziF6X4n7ED"/>
+<div class="absolute inset-0 bg-gradient-to-br from-orange-900/60 to-primary/40"></div>
+<div class="absolute inset-0 p-4 flex flex-col justify-between">
+<span class="self-start px-2 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white flex items-center gap-1">
+<span class="material-icons-round text-[10px]">person</span> 450 listening
+                    </span>
+<div>
+<h3 class="text-white font-bold text-lg">Golden Nostalgia</h3>
+<p class="text-white/70 text-xs">80s &amp; 90s classics</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Tab Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-primary/10 pb-8 pt-3 px-6">
+<div class="flex items-center justify-between max-w-md mx-auto">
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons-round">explore</span>
+<span class="text-[10px] font-bold">Discover</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round">equalizer</span>
+<span class="text-[10px] font-bold">Charts</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round">library_music</span>
+<span class="text-[10px] font-bold">Library</span>
+</button>
+</div>
+</nav>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

@@ -20,6 +20,7 @@ export interface SongRecommendation {
   title: string;
   artist: string;
   matchScore: number;
+  emotions: Emotion[]; // Breakdown for this specific song
   tags: string[];
   youtubeVideoId: string; // YouTube video ID for thumbnail generation
   thumbnail: string; // Deprecated, will be generated from youtubeVideoId
@@ -38,8 +39,8 @@ export async function analyzeMood(userInput: string, imageFile?: File): Promise<
   // Fallback to gemini-pro/vision as 1.5-flash is returning 404
   // const modelName = imageFile ? "gemini-1.5-flash" : "gemini-pro";
   // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  // 'gemini-1.5-flash' 대신 'models/gemini-1.5-flash'라고 적어보세요.
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  // Try writing 'models/gemini-1.5-flash' instead of 'gemini-1.5-flash'.
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `
     Analyze the following user mood description ${imageFile ? "and the provided image" : ""} and provide a structured JSON response for a music recommendation app called "Rhythmish".
@@ -60,6 +61,11 @@ export async function analyzeMood(userInput: string, imageFile?: File): Promise<
           "title": "Song Title",
           "artist": "Artist Name",
           "matchScore": 99,
+          "emotions": [
+             { "label": "Joy", "value": 25, "color": "text-yellow-400", "icon": "sentiment_very_satisfied" },
+             { "label": "Calm", "value": 75, "color": "text-blue-400", "icon": "water_drop" },
+             { "label": "Nostalgia", "value": 40, "color": "text-orange-400", "icon": "history" }
+          ],
           "tags": ["#Tag1", "#Tag2"],
           "youtubeVideoId": "11-character-id",
           "thumbnail": "",
@@ -72,6 +78,11 @@ export async function analyzeMood(userInput: string, imageFile?: File): Promise<
     Choose exactly 3 emotions that best fit the mood.
     Provide 3-5 song recommendations.
     
+    CRITICAL INSTRUCTIONS for Emotion Matching:
+    1. For each song in 'recommendations', provide an 'emotions' array that uses the EXACT SAME 3 'label' names as the top-level 'emotions' array.
+    2. The 'value' for each emotion in a song should represent how much that specific song embodies that emotion.
+    3. The 'matchScore' should be a reflection of how closely the song's emotion values align with the user's emotion values.
+
     CRITICAL INSTRUCTIONS for YouTube recommendations:
     1. Only recommend REAL, well-known songs that exist on YouTube.
     2. Always provide a perfect 'searchQuery' (e.g., 'Artist Name - Song Title official music video') that reflects the headline and emotions discovered.
