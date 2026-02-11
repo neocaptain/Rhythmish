@@ -149,7 +149,7 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-slate-900 dark:text-white text-[31px] font-bold leading-[1.1] tracking-tight"
+                    className="text-slate-900 dark:text-white text-[30px] font-bold leading-[1.1] tracking-tight"
                 >
                     What's your <span className="text-primary">rhythm</span> today?
                 </motion.h1>
