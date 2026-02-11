@@ -1,35 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { getTrendingMusic, getBrowserRegionCode } from '../services/youtube';
 
 const Discover: React.FC = () => {
-    const trendingVideos = [
-        {
-            id: 1,
-            title: "Midnight Neon Streets",
-            artist: "Synthetic Dreams",
-            time: "2 days ago",
-            views: "4.2M",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDe_jDgaHQ6Pa2jNdgWNUp60wPszoo8APWYnyJw_2DYjIc5JiIsjngGWhiw8AhJtVD28IPi7SvJPynrXHY3zNLoNk2Q5Rifua_7z_DetsF07n04K_-2gEbQqWQIVXJIqaudVz-nUFokB6EbX6zt2pg9XA0g-lsbzFA4OkkLEK8k9AUjc7DKou5xOqjCyIiDbYThwahyyowc5ckKEExChiK4PvSe5lxPo9O7ppcD5Ohx_hbqL3Z_OYds4zV3lTYYehwYsXgjAPoNRxwS"
-        },
-        {
-            id: 2,
-            title: "Echoes of the Valley",
-            artist: "Luna Ray",
-            time: "1 week ago",
-            views: "1.8M",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDXnOvDzjrmx30fkH9YpAvcO2WNY27rFc0tRTnDQEqFJUYwWuO94DlH5TFV3AsIFV7-o_UDxsigfI7JEEHk2aX0Jowl4zSyWMu6poQi1NAxy_yPDNcjG8xBmCm5_1Sn0FuVVbs8lloyzgnXGxu9EyZw0E2fuqpA3Ge0xBH4aTuB-jPgkgxStXDTH7of8C6uLrHY2ny5bA7_-ZcCRGP977UKLFBkg-vRaK8EtJMr6cCzj2fBn9DYCY0zWVsGtXsJDMIq22Vt6khRzyyF"
-        },
-        {
-            id: 3,
-            title: "Frequency Pulse",
-            artist: "Deep Logic",
-            time: "3 days ago",
-            views: "920K",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBVEMqYjuSGGz1AGlRCTsWo_ipvWQrJWbpUdF196EojJl5ftcy1kOw62d1JxUkLC3bRT-AIu4Z2YWw-WSxcCCukSvQYio09CifDG4pg7yh-FxWDt3Sbz7WgTGl02QY6yP6cJwePFmugHlXRaIwSSa7XkXx6uqGpoEFNpFjyo04xqpR0QOVGaoXpIkgldshwseJFTJxM7Kbi7dXtvFb59hXH7Eu-qulfljTTMaXkEaSIv2MMU88IvGT-hycpKiNCZzF-xtDOUNHN5Ozl"
-        }
-    ];
+    const [trendingVideos, setTrendingVideos] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTrending = async () => {
+            try {
+                const region = getBrowserRegionCode();
+                const data = await getTrendingMusic(region);
+                setTrendingVideos(data);
+            } catch (error) {
+                console.error("Failed to fetch trending videos:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTrending();
+    }, []);
 
     const communityMoods = [
+        // ... (rest of communityMoods remains)
         {
             title: "Rainy Day Melodies",
             desc: "Soft piano & lo-fi",
@@ -85,24 +78,50 @@ const Discover: React.FC = () => {
                     <button className="text-primary text-sm font-semibold">View All</button>
                 </div>
                 <div className="flex overflow-x-auto pb-4 gap-4 px-6 no-scrollbar snap-x">
-                    {trendingVideos.map((video) => (
-                        <div key={video.id} className="flex-none w-80 snap-start">
-                            <div className="relative group rounded-xl overflow-hidden mb-3 aspect-video shadow-lg">
-                                <img alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src={video.image} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-2 py-1">
-                                    <span className="text-[10px] font-bold text-white flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-xs text-red-500 fill-1">visibility</span> {video.views}
-                                    </span>
-                                </div>
-                                <button className="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="material-symbols-outlined text-3xl fill-1">play_arrow</span>
-                                </button>
+                    {isLoading ? (
+                        // Loading Skeletons
+                        [1, 2, 3].map((i) => (
+                            <div key={i} className="flex-none w-80 snap-start animate-pulse">
+                                <div className="aspect-video bg-slate-200 dark:bg-slate-800 rounded-xl mb-3"></div>
+                                <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-2"></div>
+                                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
                             </div>
-                            <h3 className="font-bold text-lg leading-tight truncate">{video.title}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">{video.artist} • {video.time}</p>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        trendingVideos.map((video) => (
+                            <div key={video.id} className="flex-none w-80 snap-start">
+                                <div className="relative group rounded-xl overflow-hidden mb-3 aspect-video shadow-lg">
+                                    <img
+                                        alt={video.snippet.title}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        src={video.snippet.thumbnails.high.url}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                    <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-2 py-1">
+                                        <span className="text-[10px] font-bold text-white flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-xs text-red-500 fill-1">visibility</span>
+                                            {video.statistics?.viewCount
+                                                ? (parseInt(video.statistics.viewCount) > 1000000
+                                                    ? (parseInt(video.statistics.viewCount) / 1000000).toFixed(1) + 'M'
+                                                    : (parseInt(video.statistics.viewCount) / 1000).toFixed(0) + 'K')
+                                                : '0'
+                                            }
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank')}
+                                        className="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <span className="material-symbols-outlined text-3xl fill-1">play_arrow</span>
+                                    </button>
+                                </div>
+                                <h3 className="font-bold text-lg leading-tight truncate">{video.snippet.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                    {video.snippet.channelTitle} • {new Date(video.snippet.publishedAt).toLocaleDateString()}
+                                </p>
+                            </div>
+                        ))
+                    )}
                 </div>
             </section>
 
