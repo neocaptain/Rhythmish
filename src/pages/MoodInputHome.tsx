@@ -4,7 +4,7 @@ import { auth, googleProvider } from '../services/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 
 interface MoodInputHomeProps {
-    onAnalyze: (text: string, imageFile?: File) => void;
+    onAnalyze: (text: string, imageFile?: File, type?: "text" | "gallery" | "camera") => void;
 }
 
 const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {

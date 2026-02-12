@@ -21,21 +21,24 @@ const App: React.FC = () => {
   const [lastInputText, setLastInputText] = useState<string>("");
   const [lastImageFile, setLastImageFile] = useState<File | undefined>(undefined);
 
-  const handleAnalyze = async (text: string, imageFile?: File, inputType?: "text" | "gallery" | "camera") => {
+  const handleAnalyze = async (text: string, imageFile?: File, type?: "text" | "gallery" | "camera") => {
     setState('ANALYSIS');
     setError(null);
 
-    // input type and data storage
-    if (inputType === "camera" || inputType === "gallery") {
-      // if there is an image, camera or gallery
-      setLastInputType(inputType);
-      setLastImageFile(imageFile);
-      setLastInputText(""); // image analysis result summary
-    } else {
-      setLastInputType("text");
-      setLastInputText(text);
-      setLastImageFile(undefined);
+    // first, use the passed type, if not, infer it
+    let inputType: "text" | "gallery" | "camera" = type || "text";
+
+    // if there is an image but type is not specified, set it to camera
+    if (imageFile && inputType === "text") {
+      inputType = "camera"; // if there is an image but type is not specified, set it to camera
     }
+
+    // state update (this value is passed to EmotionResult)
+    setLastInputType(inputType);
+    setLastInputText(text);
+    setLastImageFile(imageFile);
+
+    console.log(`analysis start - type: ${inputType}, image existence: ${!!imageFile}`);
 
     try {
       const result = await analyzeMood(text, imageFile);
