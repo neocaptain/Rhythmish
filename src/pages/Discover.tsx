@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getTrendingMusic, getBrowserRegionCode } from '../services/youtube';
 
-const Discover: React.FC = () => {
+interface DiscoverProps {
+    onShowMixtape: () => void;
+}
+
+const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
     const [trendingVideos, setTrendingVideos] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -137,7 +141,12 @@ const Discover: React.FC = () => {
                             <p className="text-white/80 text-xs">AI has selected 5 new songs for your vibe.</p>
                         </div>
                     </div>
-                    <button className="bg-white text-primary px-3 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform">Tune In</button>
+                    <button
+                        onClick={onShowMixtape}
+                        className="bg-white text-primary px-3 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition-transform"
+                    >
+                        Tune In
+                    </button>
                 </div>
             </div>
 

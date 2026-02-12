@@ -30,6 +30,11 @@
   .orb-pulse {
     background: radial-gradient(circle, rgba(127, 13, 242, 0.4) 0%, rgba(127, 13, 242, 0) 70%);
   }
+
+  .gradient-mesh {
+    background-image: radial-gradient(at 0% 0%, rgba(127, 13, 242, 0.15) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(127, 13, 242, 0.1) 0px, transparent 50%);
+  }
 }
 
 /* Material Symbols Support */

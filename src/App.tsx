@@ -7,10 +7,11 @@ import RecommendedSongs from './pages/RecommendedSongs';
 import FavoriteSongs from './pages/FavoriteSongs';
 import Discover from './pages/Discover';
 import Profile from './pages/Profile';
+import PersonalizedMixtape from './pages/PersonalizedMixtape';
 import { analyzeMood } from './services/ai';
 import type { AnalysisResult } from './services/ai';
 
-type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS' | 'FAVORITES' | 'DISCOVER' | 'PROFILE';
+type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS' | 'FAVORITES' | 'DISCOVER' | 'PROFILE' | 'MIXTAPE';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>('HOME');
@@ -70,6 +71,10 @@ const App: React.FC = () => {
 
   const handleShowProfile = () => {
     setState('PROFILE');
+  }
+
+  const handleShowMixtape = () => {
+    setState('MIXTAPE');
   }
 
   const renderBottomNav = () => (
@@ -207,7 +212,7 @@ const App: React.FC = () => {
               className="h-full flex flex-col"
             >
               <div className="flex-1 overflow-hidden">
-                <Discover />
+                <Discover onShowMixtape={handleShowMixtape} />
               </div>
               {renderBottomNav()}
             </motion.div>
@@ -223,6 +228,21 @@ const App: React.FC = () => {
             >
               <div className="flex-1 overflow-hidden">
                 <Profile onBack={handleBackToHome} />
+              </div>
+              {renderBottomNav()}
+            </motion.div>
+          )}
+
+          {state === 'MIXTAPE' && (
+            <motion.div
+              key="mixtape"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="h-full flex flex-col"
+            >
+              <div className="flex-1 overflow-hidden">
+                <PersonalizedMixtape />
               </div>
               {renderBottomNav()}
             </motion.div>
