@@ -1,31 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { auth } from '../services/firebase';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { getPersonalizedMessage } from "../services/moodService";
-
-const MixtapePage = ({ currentMoodResult }: { currentMoodResult?: string }) => {
-    const [personalMsg, setPersonalMsg] = useState("Tuning into your rhythm...");
-
-    useEffect(() => {
-        const fetchMessage = async () => {
-            // execute getPersonalizedMessage even if there is no argument
-            const msg = await getPersonalizedMessage(currentMoodResult);
-            setPersonalMsg(msg);
-        };
-        fetchMessage();
-    }, [currentMoodResult]);
-
-    return (
-        <p className="text-lg leading-snug text-slate-700 dark:text-slate-200">
-            {personalMsg}
-            <span className="material-symbols-outlined text-sm align-middle ml-1 fill-1 text-primary">auto_awesome</span>
-        </p>
-    );
-};
+import { getPersonalizedMixtape } from "../services/moodService";
+import { searchYouTubeVideo } from '../services/youtube';
+import type { SongRecommendation, AnalysisResult } from '../services/ai';
+import LikeButton from '../components/LikeButton';
 
 const PersonalizedMixtape: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
+    const [personalMsg, setPersonalMsg] = useState("Tuning into your rhythm...");
+    const [augmentedSongs, setAugmentedSongs] = useState<SongRecommendation[]>([]);
+    const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+    const [selectedSong, setSelectedSong] = useState<SongRecommendation | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,38 +22,55 @@ const PersonalizedMixtape: React.FC = () => {
         return () => unsubscribe();
     }, []);
 
-    const tracks = [
-        {
-            title: "Ethereal Drift",
-            artist: "Lumina Sounds",
-            match: "98%",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCkmtRNvNR2oD9pYRIZMYinRFVP6CD6-qd9iXALcERkl22AfmeTdNJ6mHjq3ip1aafUT6aP5c6TBC8S0Z_QwYlkmiycbUwvwIhhL4VXD8U2tUHxomgxF-ieXI8NszMhiHbYabj0lHPK_hWZE7e1AyLOljGUQUVRwTv3vk5GLsKSo3axv7obStXpuygLFpgmYMZNwo23mU7svXxInbIme8dSMEJfn7_QiWresn5RO_oSZv9ovxXX_YfidHQUiay7bcj9dMfeflKbbo4j"
-        },
-        {
-            title: "Midnight Velvet",
-            artist: "Satin Waves",
-            match: "94%",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCZiitX8NHHmjD91I6REpq6y1Mxf84WeqzTVLw4VlBrkhTrZR0d021qi4gjzZ7cvwPM7ns2kYahQHLi_8XgwAOJguh3DkV5lmO7chJSYuPyB-xiVOJgj6B6KEahVXuJXFuoJ3iBWivKHCZKU6hteCUtxPbMGkW6fzNz0Z2IFTCMz8DbEy7oglYmCqLt4qyL4oGHl-Hn40hgkM9o1BqQKyh2-9F6jkUfajYJkmh65gxFYnpaLchMKslP1-0uFZet6KHRk_7bMBzOCjVW"
-        },
-        {
-            title: "Neon Petals",
-            artist: "The Flutter Project",
-            match: "92%",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDZdcL5_-PqU_axwRn-Si8JZkxtNNgxIN4HfH39BKU_w8QI-dtRAkwPt1Hn7Fd3JXfPNjhWbVKn4ap-YKix98xxsBO-H9hJVfeuIF5QVw1vqag3BbtAdyy5UWjGyAx4ZRPHgEiMkJPb0Ex8GBcT5HVeQgjZgRnomHCW4HvVGLmeTwYXaOgyCK1kxyQkwmnetWEuFRi7VgeYbR5y2mjBdRl2UOsD51MZjZSsB8sVRF8nQN2wXgfIXZz0XPARlPiRdEFsZ9LtYYvJv2wi"
-        },
-        {
-            title: "Digital Bloom",
-            artist: "Circuit Garden",
-            match: "89%",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuATElxbTsuZVJKi6CiGWuuFMzfQ90-Ns_UE_XlqSR0f6NxJjJcJkgblAX1gl7hi5BgSpZ-R8ibp8B-x5yd_E_AGMSWOF7qwDMz0nnWL2ZbPnt8X4ovn5PGo7gApylcCDhJ2omaD-iABO1BxlXRH9Kw71MBTiYTZVntqLQqy9VUiC7HTZtpVCd03Ck-FX2A8dMPCM5Iie7DkpEdpLkiG59Q_yEdfCfzKJE3G4h7WC9r9516sgWx3VLJGNfAxNdiKuyHHvNkjFz02eSjH"
-        },
-        {
-            title: "Starlight Echo",
-            artist: "Nova Kid",
-            match: "85%",
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCYXt3xhLeTrw3vwzvuuyYa1v180Cb00ICmAVc-cHLFIKuzrZzFdvc1CaD48Evs_ZAxaTkKinBmzkLUzg_tO9shsfo5rzVTkjEpGLZmH5tScI-tJXvkQy0O0RpRF29Pyx0_SuO_6SyHguBmNF0tj_BmmQQElfbejqPyMBo2RLO3BYZNU1MdBATZzuksaj9ssqcCEEnROXXskc_0tnNnJYOBaiiCueRk1obmWt3jXio65S5Fit-dTFHu6B7A1nLEOvGMR1h75TsmowDf"
+    useEffect(() => {
+        const fetchMixtape = async () => {
+            setIsLoading(true);
+            try {
+                const { message, result } = await getPersonalizedMixtape();
+                setPersonalMsg(message);
+                setAnalysisResult(result);
+
+                if (result && result.recommendations) {
+                    const songsWithYt = await Promise.all(
+                        result.recommendations.map(async (song) => {
+                            const ytData = await searchYouTubeVideo(song.searchQuery);
+                            if (ytData) {
+                                return {
+                                    ...song,
+                                    youtubeVideoId: ytData.videoId,
+                                    thumbnail: ytData.thumbnail
+                                };
+                            }
+                            return song;
+                        })
+                    );
+                    setAugmentedSongs(songsWithYt);
+                }
+            } catch (error) {
+                console.error("Failed to fetch personalized mixtape:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchMixtape();
         }
-    ];
+    }, [user]);
+
+    const handlePlayOnYouTube = (song: SongRecommendation) => {
+        const url = song.youtubeVideoId
+            ? `https://www.youtube.com/watch?v=${song.youtubeVideoId}`
+            : `https://www.youtube.com/results?search_query=${encodeURIComponent(song.searchQuery)}`;
+        window.open(url, '_blank');
+    };
+
+    const getYouTubeThumbnail = (song: SongRecommendation): string => {
+        if (song.youtubeVideoId && song.youtubeVideoId.length === 11) {
+            return `https://img.youtube.com/vi/${song.youtubeVideoId}/hqdefault.jpg`;
+        }
+        return song.thumbnail || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=60';
+    };
 
     return (
         <div className="relative flex-1 flex flex-col overflow-hidden">
@@ -97,54 +102,163 @@ const PersonalizedMixtape: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="glass-card rounded-2xl p-5 mb-8 border-l-4 border-l-primary shadow-xl shadow-primary/5"
                     >
-                        {/* execute getPersonalizedMessage even if there is no argument */}
-                        <MixtapePage />
+                        <p className="text-lg leading-snug text-slate-700 dark:text-slate-200">
+                            {personalMsg}
+                            <span className="material-symbols-outlined text-sm align-middle ml-1 fill-1 text-primary">auto_awesome</span>
+                        </p>
                     </motion.div>
 
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80">Your Personal Mix</h2>
-                        <span className="text-xs text-slate-400 font-medium">{tracks.length} Tracks</span>
+                        <span className="text-xs text-slate-400 font-medium">
+                            {isLoading ? "..." : augmentedSongs.length} Tracks
+                        </span>
                     </div>
                 </header>
 
                 <div className="space-y-4">
-                    {tracks.map((track, index) => (
-                        <motion.div
-                            key={index}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="glass-card rounded-xl p-3 flex items-center gap-4 group active:scale-[0.98] transition-all relative cursor-pointer"
-                        >
-                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                                <img src={track.image} alt={track.title} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="material-symbols-outlined text-white text-3xl fill-1">play_arrow</span>
+                    {isLoading ? (
+                        [1, 2, 3, 4, 5].map((i) => (
+                            <div key={i} className="glass-card rounded-xl p-3 flex items-center gap-4 animate-pulse">
+                                <div className="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-lg flex-shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
                                 </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-base truncate text-slate-900 dark:text-white">{track.title}</h3>
-                                <p className="text-xs text-slate-400 truncate">{track.artist}</p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full mb-1">{track.match} Match</span>
-                                <div className="flex items-center gap-1">
-                                    <button className="p-1.5 hover:bg-primary/10 rounded-full transition-colors">
-                                        <span className="material-symbols-outlined text-primary text-xl">favorite</span>
-                                    </button>
-                                    <button className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
-                                        <span className="material-symbols-outlined text-slate-400 text-xl">more_vert</span>
-                                    </button>
+                        ))
+                    ) : (
+                        augmentedSongs.map((track, index) => (
+                            <motion.div
+                                key={track.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="glass-card rounded-xl p-3 flex items-center gap-4 group active:scale-[0.98] transition-all relative cursor-pointer"
+                                onClick={() => handlePlayOnYouTube(track)}
+                            >
+                                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                    <img src={getYouTubeThumbnail(track)} alt={track.title} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="material-symbols-outlined text-white text-3xl fill-1">play_arrow</span>
+                                    </div>
+                                    {/* Like Button overlay on image */}
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <LikeButton
+                                            song={track}
+                                            userMood={analysisResult?.emotions || []}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-base truncate text-slate-900 dark:text-white">{track.title}</h3>
+                                    <p className="text-xs text-slate-400 truncate">{track.artist}</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedSong(track);
+                                        }}
+                                        className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full mb-1 hover:bg-primary/20 transition-colors"
+                                    >
+                                        {track.matchScore}% Match
+                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
+                                            <span className="material-symbols-outlined text-slate-400 text-xl">more_vert</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
                 </div>
+
+                {!isLoading && augmentedSongs.length === 0 && (
+                    <div className="text-center py-10">
+                        <p className="text-slate-400 text-sm">No recommendations yet. Try liking some songs!</p>
+                    </div>
+                )}
 
                 <div className="mt-10 mb-6 text-center">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Powered by YouTube & Rhytmix AI</p>
                 </div>
             </main>
+
+            {/* Match Reason Modal */}
+            <AnimatePresence>
+                {selectedSong && analysisResult && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedSong(null)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-[#211b27] rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-white/10"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Why {selectedSong.matchScore}% Match?</h3>
+                                <button onClick={() => setSelectedSong(null)} className="size-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
+                                </button>
+                            </div>
+                            <div className="space-y-6">
+                                <div className="space-y-5">
+                                    {analysisResult.emotions.map((userEmotion, idx) => {
+                                        const songEmotion = selectedSong.emotions.find(e => e.label === userEmotion.label);
+                                        return (
+                                            <div key={userEmotion.label} className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-bold flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                                                        <span className={`material-symbols-outlined ${userEmotion.color} text-base`}>{userEmotion.icon}</span>
+                                                        {userEmotion.label}
+                                                    </span>
+                                                    <div className="flex gap-4">
+                                                        <span className="text-[10px] font-black text-slate-400">{userEmotion.value}%</span>
+                                                        <span className="text-[10px] font-black text-primary">{songEmotion?.value || 0}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${userEmotion.value}%` }}
+                                                        transition={{ delay: idx * 0.1, duration: 0.8 }}
+                                                        className="absolute inset-y-0 left-0 bg-primary/20 rounded-full"
+                                                    />
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${songEmotion?.value || 0}%` }}
+                                                        transition={{ delay: idx * 0.1 + 0.2, duration: 0.8 }}
+                                                        className="absolute inset-y-0 left-0 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="pt-2 border-t border-slate-200 dark:border-white/10">
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                        <strong>{selectedSong.title}</strong> by {selectedSong.artist} scored <strong>{selectedSong.matchScore}%</strong> because it aligns with your profile.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedSong(null)}
+                                className="w-full mt-6 bg-primary text-white font-semibold py-3 rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                Got it!
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
