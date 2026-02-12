@@ -75,9 +75,13 @@ export const saveMoodResult = async (params: {
     imageFile?: File | null
 }) => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+        console.error("user is not logged in");
+        return;
+    }
 
     try {
+        console.log("start: cleaning up old data...");
         // delete old data and images
         await cleanupOldData(user.uid);
 
@@ -86,13 +90,23 @@ export const saveMoodResult = async (params: {
 
         // if there is an image file, upload it
         if (params.imageFile) {
+            console.log("start: image upload:", params.imageFile.name);
             const uploadResult = await uploadAndCompressImage(params.imageFile, user.uid);
             imageUrl = uploadResult.downloadURL;
             storagePath = uploadResult.storagePath;
+            console.log("end: image upload:", imageUrl);
         }
 
+        // Firestore save data log
+        console.log("Firestore save data:", {
+            userId: user.uid,
+            userMood: params.userMood,
+            inputType: params.inputType,
+            userInput: params.userInput
+        });
+
         // save to Firestore
-        await addDoc(collection(db, "mood_history"), {
+        const docRef = await addDoc(collection(db, "mood_history"), {
             userId: user.uid,
             userMood: params.userMood,
             inputType: params.inputType,
@@ -102,9 +116,12 @@ export const saveMoodResult = async (params: {
             createdAt: serverTimestamp()
         });
 
-        console.log("mood result saved successfully.");
-    } catch (error) {
-        console.error("saving process failed:", error);
-        alert("result saving failed.");
+        console.log("mood result saved successfully. document ID:", docRef.id);
+    } catch (error: any) {
+        // detailed error log
+        console.error("❌ saving process failed detailed cause:");
+        console.error("error message:", error.message);
+        console.error("error code:", error.code);
+        console.error("error object:", error);
     }
 };
