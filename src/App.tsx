@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Toaster } from 'react-hot-toast'; // 1. Import Toaster
 import MoodInputHome from './pages/MoodInputHome';
 import MoodAnalysis from './pages/MoodAnalysis';
 import EmotionResult from './pages/EmotionResult';
@@ -17,7 +18,7 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>('HOME');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // analysis metadata storage state
+
   const [lastInputType, setLastInputType] = useState<"text" | "gallery" | "camera">("text");
   const [lastInputText, setLastInputText] = useState<string>("");
   const [lastImageFile, setLastImageFile] = useState<File | undefined>(undefined);
@@ -26,10 +27,8 @@ const App: React.FC = () => {
     setState('ANALYSIS');
     setError(null);
 
-    // type is passed, set it to camera if there is an image, otherwise set it to text
     const inputType = type || (imageFile ? "camera" : "text");
 
-    // state update (this value is passed to EmotionResult)
     setLastInputType(inputType);
     setLastInputText(text);
     setLastImageFile(imageFile);
@@ -61,21 +60,10 @@ const App: React.FC = () => {
     setAnalysisResult(null);
   };
 
-  const handleShowFavorites = () => {
-    setState('FAVORITES');
-  };
-
-  const handleShowDiscover = () => {
-    setState('DISCOVER');
-  }
-
-  const handleShowProfile = () => {
-    setState('PROFILE');
-  }
-
-  const handleShowMixtape = () => {
-    setState('MIXTAPE');
-  }
+  const handleShowFavorites = () => setState('FAVORITES');
+  const handleShowDiscover = () => setState('DISCOVER');
+  const handleShowProfile = () => setState('PROFILE');
+  const handleShowMixtape = () => setState('MIXTAPE');
 
   const renderBottomNav = () => (
     <div className="flex items-center justify-around border-t border-slate-100 dark:border-white/5 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 pb-8 shrink-0">
@@ -110,9 +98,24 @@ const App: React.FC = () => {
     </div>
   );
 
-
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen">
+      {/* 2. Add Toaster here for global availability */}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          className: 'dark:bg-slate-800 dark:text-white',
+          duration: 3000,
+          style: {
+            borderRadius: '12px',
+            background: '#1e1b4b',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: '600'
+          }
+        }}
+      />
+
       <div className="app-container">
         {error && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium">
@@ -166,7 +169,6 @@ const App: React.FC = () => {
                 inputType={lastInputType}
                 userInputText={lastInputText}
               />
-
             </motion.div>
           )}
 
@@ -242,7 +244,11 @@ const App: React.FC = () => {
               className="h-full flex flex-col"
             >
               <div className="flex-1 overflow-hidden">
-                <PersonalizedMixtape />
+                {/* 3. PersonalizedMixtape might need back functionality */}
+                <PersonalizedMixtape
+                  currentMoodResult={analysisResult?.emotions[0]?.label}
+                  onBack={handleShowDiscover}
+                />
               </div>
               {renderBottomNav()}
             </motion.div>

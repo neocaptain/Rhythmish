@@ -1,22 +1,66 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SongRecommendation } from '../services/ai';
+import { handleSongActions } from '../services/actionService'; // Import the service created earlier
+import { reportNegativeFeedback } from '../services/musicService';
+import { auth } from '../services/firebase';
+import { toast } from 'react-hot-toast';
 
 interface ActionSheetProps {
     isOpen: boolean;
     onClose: () => void;
     song: SongRecommendation | null;
+    currentMood?: string; // Added to pass mood info for sharing
 }
 
-const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song }) => {
+const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song, currentMood = "Good" }) => {
     if (!song) return null;
 
-    const handlePlayOnYouTube = () => {
-        const url = song.youtubeVideoId
-            ? `https://www.youtube.com/watch?v=${song.youtubeVideoId}`
-            : `https://www.youtube.com/results?search_query=${encodeURIComponent(song.searchQuery)}`;
-        window.open(url, '_blank');
-        onClose();
+    const user = auth.currentUser;
+
+    // Unified Menu Click Handler
+    const handleMenuClick = async (actionType: string) => {
+        const videoId = song.youtubeVideoId || "";
+
+        switch (actionType) {
+            case 'OPEN_YOUTUBE':
+                if (videoId) {
+                    handleSongActions.openInYouTube(videoId);
+                } else {
+                    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(song.searchQuery)}`;
+                    window.open(searchUrl, '_blank');
+                }
+                break;
+
+            case 'PLAY_NEXT':
+                // Logic depends on your global player state
+                toast.success("Added to play next!");
+                break;
+
+            case 'ADD_PLAYLIST':
+                if (user) {
+                    // This could trigger another sub-menu to pick a playlist
+                    await handleSongActions.addToMyPlaylist(user.uid, "My Favorites", song);
+                    toast.success("Added to My Favorites!");
+                } else {
+                    toast.error("Please login first");
+                }
+                break;
+
+            case 'SHARE':
+                await handleSongActions.shareSongWithMood(song.title, currentMood);
+                break;
+
+            case 'DISLIKE':
+                if (user) {
+                    const success = await reportNegativeFeedback(user.uid, song);
+                    if (success) {
+                        toast.info("Got it. We'll refine your future recommendations.");
+                    }
+                }
+                break;
+        }
+        onClose(); // Close sheet after action
     };
 
     return (
@@ -64,44 +108,56 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song }) => {
                             {/* Menu Options */}
                             <div className="space-y-1">
                                 <button
-                                    onClick={handlePlayOnYouTube}
+                                    onClick={() => handleMenuClick('OPEN_YOUTUBE')}
                                     className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group"
                                 >
                                     <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                                         <span className="material-symbols-outlined text-red-500">play_circle</span>
                                     </div>
-                                    <span className="text-white text-lg font-medium text-left">Open in YouTube</span>
+                                    <span className="text-white text-lg font-medium">Open in YouTube</span>
                                     <span className="material-symbols-outlined ml-auto text-slate-500">open_in_new</span>
                                 </button>
 
-                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                <button
+                                    onClick={() => handleMenuClick('PLAY_NEXT')}
+                                    className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group"
+                                >
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                                         <span className="material-symbols-outlined text-primary">playlist_play</span>
                                     </div>
-                                    <span className="text-white text-lg font-medium text-left">Play Next</span>
+                                    <span className="text-white text-lg font-medium">Play Next</span>
                                 </button>
 
-                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                <button
+                                    onClick={() => handleMenuClick('ADD_PLAYLIST')}
+                                    className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group"
+                                >
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                                         <span className="material-symbols-outlined text-primary">playlist_add</span>
                                     </div>
-                                    <span className="text-white text-lg font-medium text-left">Add to My Playlist</span>
+                                    <span className="text-white text-lg font-medium">Add to My Playlist</span>
                                 </button>
 
-                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                <button
+                                    onClick={() => handleMenuClick('SHARE')}
+                                    className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group"
+                                >
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                                         <span className="material-symbols-outlined text-primary">ios_share</span>
                                     </div>
-                                    <span className="text-white text-lg font-medium text-left">Share with Friends</span>
+                                    <span className="text-white text-lg font-medium">Share with Friends</span>
                                 </button>
 
                                 <div className="h-px bg-white/5 mx-4 my-2"></div>
 
-                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                <button
+                                    onClick={() => handleMenuClick('DISLIKE')}
+                                    className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group"
+                                >
                                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
                                         <span className="material-symbols-outlined text-slate-400">block</span>
                                     </div>
-                                    <span className="text-slate-300 text-lg font-medium text-left">Don't Recommend Style</span>
+                                    <span className="text-slate-300 text-lg font-medium">Don't Recommend This Style</span>
                                 </button>
 
                                 <button

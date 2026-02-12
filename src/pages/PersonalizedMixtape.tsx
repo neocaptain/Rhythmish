@@ -8,7 +8,16 @@ import type { SongRecommendation, AnalysisResult } from '../services/ai';
 import LikeButton from '../components/LikeButton';
 import ActionSheet from '../components/ActionSheet';
 
-const PersonalizedMixtape: React.FC = () => {
+// 1. Define Props Interface for the component
+interface PersonalizedMixtapeProps {
+    currentMoodResult?: string; // Analysis result passed from App.tsx
+    onBack?: () => void;        // Function to go back to Discover page
+}
+
+const PersonalizedMixtape: React.FC<PersonalizedMixtapeProps> = ({
+    currentMoodResult,
+    onBack
+}) => {
     const [user, setUser] = useState<User | null>(null);
     const [personalMsg, setPersonalMsg] = useState("Tuning into your rhythm...");
     const [augmentedSongs, setAugmentedSongs] = useState<SongRecommendation[]>([]);
@@ -29,7 +38,8 @@ const PersonalizedMixtape: React.FC = () => {
         const fetchMixtape = async () => {
             setIsLoading(true);
             try {
-                const { message, result } = await getPersonalizedMixtape();
+                // Pass currentMoodResult to the service if available
+                const { message, result } = await getPersonalizedMixtape(currentMoodResult);
                 setPersonalMsg(message);
                 setAnalysisResult(result);
 
@@ -59,8 +69,7 @@ const PersonalizedMixtape: React.FC = () => {
         if (user) {
             fetchMixtape();
         }
-    }, [user]);
-
+    }, [user, currentMoodResult]); // Re-fetch if mood result changes
 
     const getYouTubeThumbnail = (song: SongRecommendation): string => {
         if (song.youtubeVideoId && song.youtubeVideoId.length === 11) {
@@ -70,18 +79,28 @@ const PersonalizedMixtape: React.FC = () => {
     };
 
     return (
-        <div className="relative flex-1 flex flex-col overflow-hidden">
+        <div className="relative flex-1 flex flex-col overflow-hidden bg-background-light dark:bg-background-dark">
             {/* Background Gradient Mesh */}
             <div className="absolute top-0 left-0 w-full h-full gradient-mesh pointer-events-none z-0"></div>
 
             <main className="flex-1 overflow-y-auto no-scrollbar z-10 px-6 pb-28">
                 <header className="pt-6 pb-8">
+                    {/* Top Navigation */}
                     <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                                <span className="material-symbols-outlined text-white text-xl fill-1">auto_awesome</span>
+                        <div className="flex items-center gap-4">
+                            {/* Back Button */}
+                            <button
+                                onClick={onBack}
+                                className="size-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined">arrow_back</span>
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
+                                    <span className="material-symbols-outlined text-white text-base fill-1">auto_awesome</span>
+                                </div>
+                                <h1 className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Mixtape</h1>
                             </div>
-                            <h1 className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white">Rhytmix</h1>
                         </div>
                         <div className="w-10 h-10 rounded-full border-2 border-primary/30 p-0.5 overflow-hidden">
                             {user?.photoURL ? (
@@ -135,7 +154,7 @@ const PersonalizedMixtape: React.FC = () => {
                             >
                                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                                     <img src={getYouTubeThumbnail(track)} alt={track.title} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                         <span className="material-symbols-outlined text-white text-3xl fill-1">play_arrow</span>
                                     </div>
                                 </div>
@@ -266,6 +285,7 @@ const PersonalizedMixtape: React.FC = () => {
                 isOpen={isActionSheetOpen}
                 onClose={() => setIsActionSheetOpen(false)}
                 song={currentActionSong}
+                currentMood={analysisResult?.emotions[0]?.label}
             />
         </div>
     );
