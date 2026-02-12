@@ -1,9 +1,10 @@
 import { db, auth, storage } from "./firebase";
 import {
-    collection, addDoc, query, where, getDocs, deleteDoc, doc, serverTimestamp, Timestamp
+    collection, addDoc, query, where, getDocs, deleteDoc, doc, serverTimestamp, Timestamp, orderBy, limit
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import imageCompression from "browser-image-compression";
+import { getTimeAgo } from '../utils/dateUtils';
 
 /**
  * 1. image compression and Storage upload function
@@ -123,5 +124,75 @@ export const saveMoodResult = async (params: {
         console.error("error message:", error.message);
         console.error("error code:", error.code);
         console.error("error object:", error);
+    }
+};
+
+export const getPersonalizedMessage = async (manualMood?: string) => {
+    const user = auth.currentUser;
+    if (!user) return "Welcome! Let's find your rhythm.";
+
+    try {
+        // 1. current/recent mood
+        let currentMood = manualMood;
+        if (!currentMood) {
+            const moodQuery = query(
+                collection(db, "mood_history"),
+                where("userId", "==", user.uid),
+                orderBy("createdAt", "desc"),
+                limit(1)
+            );
+            const moodSnapshot = await getDocs(moodQuery);
+            if (!moodSnapshot.empty) {
+                currentMood = moodSnapshot.docs[0].data().userMood[0].emotion;
+            } else {
+                currentMood = "Good";
+            }
+        }
+
+        // 2. recent liked song
+        const likedQuery = query(
+            collection(db, "liked_songs"),
+            where("userId", "==", user.uid),
+            orderBy("likedAt", "desc"),
+            limit(1)
+        );
+        const likedSnapshot = await getDocs(likedQuery);
+
+        // if there is no liked song, return early
+        if (likedSnapshot.empty) {
+            return `Since you're feeling ${currentMood} today, I've curated a special rhythm for you!`;
+        }
+
+        // declare variables only once
+        const lastSongData = likedSnapshot.docs[0].data();
+        const timeAgo = getTimeAgo(lastSongData.likedAt.toDate());
+        const lastSongMood = lastSongData.mood || "";
+
+        // 3. emotion matching logic
+        let vibeCheck = "I've tuned into your vibration to find the perfect tracks.";
+        const positiveMoods = ["Happy", "Fluttery", "Energetic", "Excited", "Peaceful"];
+        const negativeMoods = ["Sad", "Stressed", "Lonely", "Tired", "Gloomy", "Anxious"];
+
+        const isCurrentPos = positiveMoods.includes(currentMood!);
+        const isCurrentNeg = negativeMoods.includes(currentMood!);
+        const isLastPos = positiveMoods.includes(lastSongMood);
+        const isLastNeg = negativeMoods.includes(lastSongMood);
+
+        if (isCurrentPos && isLastPos) {
+            vibeCheck = "Keep that amazing energy flowing! I've picked more to brighten your day.";
+        } else if (isCurrentNeg && isLastNeg) {
+            vibeCheck = "It's okay to feel this way. I've found some calm melodies to sit with you in this moment.";
+        } else if (isCurrentNeg && isLastPos) {
+            vibeCheck = "Things seem a bit heavy today. Let's find some gentle rhythms to help you recharge.";
+        } else if (isCurrentPos && isLastNeg) {
+            vibeCheck = "I'm so glad to see your vibe brightening up! Let's keep this momentum with some upbeat picks.";
+        }
+
+        // 4. final message
+        return `Because you liked "${lastSongData.title}" ${timeAgo} and feel ${currentMood} today, ${vibeCheck}`;
+
+    } catch (error) {
+        console.error("Message generation error:", error);
+        return `Discover the perfect rhythm for your mood today!`;
     }
 };

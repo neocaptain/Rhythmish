@@ -2,6 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { auth } from '../services/firebase';
 import { onAuthStateChanged, type User } from 'firebase/auth';
+import { getPersonalizedMessage } from "../services/moodService";
+
+const MixtapePage = ({ currentMoodResult }: { currentMoodResult?: string }) => {
+    const [personalMsg, setPersonalMsg] = useState("Tuning into your rhythm...");
+
+    useEffect(() => {
+        const fetchMessage = async () => {
+            // execute getPersonalizedMessage even if there is no argument
+            const msg = await getPersonalizedMessage(currentMoodResult);
+            setPersonalMsg(msg);
+        };
+        fetchMessage();
+    }, [currentMoodResult]);
+
+    return (
+        <p className="text-lg leading-snug text-slate-700 dark:text-slate-200">
+            {personalMsg}
+            <span className="material-symbols-outlined text-sm align-middle ml-1 fill-1 text-primary">auto_awesome</span>
+        </p>
+    );
+};
 
 const PersonalizedMixtape: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -56,7 +77,7 @@ const PersonalizedMixtape: React.FC = () => {
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                                <span className="material-icons-round text-white text-xl">auto_awesome</span>
+                                <span className="material-symbols-outlined text-white text-xl fill-1">auto_awesome</span>
                             </div>
                             <h1 className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white">Rhytmix</h1>
                         </div>
@@ -76,9 +97,8 @@ const PersonalizedMixtape: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="glass-card rounded-2xl p-5 mb-8 border-l-4 border-l-primary shadow-xl shadow-primary/5"
                     >
-                        <p className="text-lg leading-snug text-slate-700 dark:text-slate-200">
-                            Because you liked <span className="text-primary font-bold">"Solo"</span> yesterday and feel <span className="text-primary font-bold inline-flex items-center gap-1">Fluttery <span className="material-symbols-outlined text-sm">auto_awesome</span></span> today, I picked these for you!
-                        </p>
+                        {/* execute getPersonalizedMessage even if there is no argument */}
+                        <MixtapePage />
                     </motion.div>
 
                     <div className="flex items-center justify-between mb-4">
@@ -99,7 +119,7 @@ const PersonalizedMixtape: React.FC = () => {
                             <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                                 <img src={track.image} alt={track.title} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="material-icons-round text-white">play_arrow</span>
+                                    <span className="material-symbols-outlined text-white text-3xl fill-1">play_arrow</span>
                                 </div>
                             </div>
                             <div className="flex-1 min-w-0">
