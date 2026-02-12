@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { collection, query, where, getDocs, limit } from "firebase/firestore"; // Add Firestore imports
-import { db, auth } from "./firebase"; // Adjust the path to your firebase config
+import { auth } from "./firebase"; // Adjust the path to your firebase config
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -68,7 +67,7 @@ export async function analyzeMood(userInput: string, imageFile?: File): Promise<
   // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
   // Try writing 'models/gemini-1.5-flash' instead of 'gemini-1.5-flash'.
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-  const dislikeInstruction = await getCachedDislikes();
+  const dislikeInstruction = getCachedDislikes();
 
   const prompt = `
     Analyze the following user mood description ${imageFile ? "and the provided image" : ""} and provide a structured JSON response for a music recommendation app called "Rhythmish".
