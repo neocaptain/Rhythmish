@@ -55,7 +55,10 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song, curren
                 if (user) {
                     const success = await reportNegativeFeedback(user.uid, song);
                     if (success) {
-                        toast.info("Got it. We'll refine your future recommendations.");
+                        // Use the base toast() function with a custom icon
+                        toast("Got it. We'll refine your future recommendations.", {
+                            icon: 'ℹ️', // or any Material Symbol string if you prefer
+                        });
                     }
                 }
                 break;
