@@ -55,10 +55,17 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song, curren
                 if (user) {
                     const success = await reportNegativeFeedback(user.uid, song);
                     if (success) {
-                        // Use the base toast() function with a custom icon
-                        toast("Got it. We'll refine your future recommendations.", {
-                            icon: 'ℹ️', // or any Material Symbol string if you prefer
-                        });
+                        // Update local storage manually for immediate reflection
+                        const cachedKey = `blacklist_${user.uid}`;
+                        const cachedData = JSON.parse(localStorage.getItem(cachedKey) || '{"artists":[], "genres":[]}');
+
+                        // Add new artist if not already present
+                        if (!cachedData.artists.includes(song.artist)) {
+                            cachedData.artists.push(song.artist);
+                            localStorage.setItem(cachedKey, JSON.stringify(cachedData));
+                        }
+
+                        toast("Got it. We'll refine your future recommendations.");
                     }
                 }
                 break;

@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { collection, query, where, getDocs, limit } from "firebase/firestore"; // Add Firestore imports
+import { db, auth } from "./firebase"; // Adjust the path to your firebase config
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -35,16 +37,44 @@ export interface AnalysisResult {
   summary: string;
 }
 
+/**
+ * Get blacklist from Local Storage instead of Firestore
+ */
+function getCachedDislikes(): string {
+  const user = auth.currentUser;
+  if (!user) return "";
+
+  try {
+    const cachedData = localStorage.getItem(`blacklist_${user.uid}`);
+    if (!cachedData) return "";
+
+    const { artists, genres } = JSON.parse(cachedData);
+
+    if (artists.length === 0 && genres.length === 0) return "";
+
+    const artistList = artists.join(", ");
+    const genreList = genres.join(", ");
+
+    return `CRITICAL: The user dislikes the following artists: [${artistList}] and genres: [${genreList}]. DO NOT recommend anything similar to these.`;
+  } catch (error) {
+    console.error("Error reading cached dislikes:", error);
+    return "";
+  }
+}
+
 export async function analyzeMood(userInput: string, imageFile?: File): Promise<AnalysisResult> {
   // Fallback to gemini-pro/vision as 1.5-flash is returning 404
   // const modelName = imageFile ? "gemini-1.5-flash" : "gemini-pro";
   // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
   // Try writing 'models/gemini-1.5-flash' instead of 'gemini-1.5-flash'.
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const dislikeInstruction = await getCachedDislikes();
 
   const prompt = `
     Analyze the following user mood description ${imageFile ? "and the provided image" : ""} and provide a structured JSON response for a music recommendation app called "Rhythmish".
     User Input: "${userInput}"
+
+    ${dislikeInstruction} // 2. Inject the dislike list into the prompt
 
     The JSON must follow this exact structure:
     {

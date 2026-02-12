@@ -1,5 +1,5 @@
 import { db } from '../services/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 
 export const handleSongActions = {
     // 1. Open in YouTube
@@ -45,5 +45,34 @@ export const handleSongActions = {
         } catch (error) {
             console.error("Error sharing:", error);
         }
+    }
+};
+
+export const syncUserBlacklist = async (userId: string) => {
+    try {
+        const feedbackRef = collection(db, "user_feedback");
+        const q = query(
+            feedbackRef,
+            where("userId", "==", userId),
+            where("type", "==", "DISLIKE_STYLE")
+        );
+
+        const snapshot = await getDocs(q);
+        const blacklist = {
+            artists: [] as string[],
+            genres: [] as string[]
+        };
+
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.artist) blacklist.artists.push(data.artist);
+            if (data.genre) blacklist.genres.push(data.genre);
+        });
+
+        // Save to localStorage as a stringified JSON
+        localStorage.setItem(`blacklist_${userId}`, JSON.stringify(blacklist));
+        console.log("Blacklist synced to local storage");
+    } catch (error) {
+        console.error("Failed to sync blacklist:", error);
     }
 };
