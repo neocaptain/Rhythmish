@@ -157,7 +157,7 @@ const PersonalizedMixtape: React.FC = () => {
                                         <LikeButton
                                             song={track}
                                             userMood={analysisResult?.emotions || []}
-                                            className="relative size-9 bg-transparent"
+                                            className="relative size-9"
                                         />
                                         <button
                                             onClick={(e) => {
