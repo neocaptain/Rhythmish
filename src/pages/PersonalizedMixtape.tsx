@@ -6,6 +6,7 @@ import { getPersonalizedMixtape } from "../services/moodService";
 import { searchYouTubeVideo } from '../services/youtube';
 import type { SongRecommendation, AnalysisResult } from '../services/ai';
 import LikeButton from '../components/LikeButton';
+import ActionSheet from '../components/ActionSheet';
 
 const PersonalizedMixtape: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -14,6 +15,8 @@ const PersonalizedMixtape: React.FC = () => {
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [selectedSong, setSelectedSong] = useState<SongRecommendation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+    const [currentActionSong, setCurrentActionSong] = useState<SongRecommendation | null>(null);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -58,12 +61,6 @@ const PersonalizedMixtape: React.FC = () => {
         }
     }, [user]);
 
-    const handlePlayOnYouTube = (song: SongRecommendation) => {
-        const url = song.youtubeVideoId
-            ? `https://www.youtube.com/watch?v=${song.youtubeVideoId}`
-            : `https://www.youtube.com/results?search_query=${encodeURIComponent(song.searchQuery)}`;
-        window.open(url, '_blank');
-    };
 
     const getYouTubeThumbnail = (song: SongRecommendation): string => {
         if (song.youtubeVideoId && song.youtubeVideoId.length === 11) {
@@ -134,20 +131,12 @@ const PersonalizedMixtape: React.FC = () => {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="glass-card rounded-xl p-3 flex items-center gap-4 group active:scale-[0.98] transition-all relative cursor-pointer"
-                                onClick={() => handlePlayOnYouTube(track)}
+                                className="glass-card rounded-xl p-3 flex items-center gap-4 group active:scale-[0.98] transition-all relative"
                             >
                                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                                     <img src={getYouTubeThumbnail(track)} alt={track.title} className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <span className="material-symbols-outlined text-white text-3xl fill-1">play_arrow</span>
-                                    </div>
-                                    {/* Like Button overlay on image */}
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <LikeButton
-                                            song={track}
-                                            userMood={analysisResult?.emotions || []}
-                                        />
                                     </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -165,7 +154,19 @@ const PersonalizedMixtape: React.FC = () => {
                                         {track.matchScore}% Match
                                     </button>
                                     <div className="flex items-center gap-1">
-                                        <button className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
+                                        <LikeButton
+                                            song={track}
+                                            userMood={analysisResult?.emotions || []}
+                                            className="relative size-9 bg-transparent"
+                                        />
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setCurrentActionSong(track);
+                                                setIsActionSheetOpen(true);
+                                            }}
+                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors"
+                                        >
                                             <span className="material-symbols-outlined text-slate-400 text-xl">more_vert</span>
                                         </button>
                                     </div>
@@ -259,6 +260,13 @@ const PersonalizedMixtape: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Action Sheet */}
+            <ActionSheet
+                isOpen={isActionSheetOpen}
+                onClose={() => setIsActionSheetOpen(false)}
+                song={currentActionSong}
+            />
         </div>
     );
 };

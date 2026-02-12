@@ -7,9 +7,10 @@ import type { SongRecommendation, Emotion } from '../services/ai';
 interface LikeButtonProps {
     song: SongRecommendation;
     userMood: Emotion[];
+    className?: string;
 }
 
-const LikeButton: React.FC<LikeButtonProps> = ({ song, userMood }) => {
+const LikeButton: React.FC<LikeButtonProps> = ({ song, userMood, className }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -66,7 +67,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({ song, userMood }) => {
             whileTap={{ scale: 0.8 }}
             onClick={handleLike}
             disabled={isLoading}
-            className={`absolute top-3 left-3 size-9 backdrop-blur-md rounded-full flex items-center justify-center border border-white/10 active:scale-90 transition-all z-10 ${isLiked
+            className={`${className || 'absolute top-3 left-3 size-9 backdrop-blur-md border border-white/10'} rounded-full flex items-center justify-center active:scale-90 transition-all z-10 ${isLiked
                 ? 'bg-primary text-white'
                 : 'bg-black/40 text-white hover:bg-black/60'
                 }`}

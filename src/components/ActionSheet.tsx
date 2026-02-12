@@ -1,0 +1,122 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { SongRecommendation } from '../services/ai';
+
+interface ActionSheetProps {
+    isOpen: boolean;
+    onClose: () => void;
+    song: SongRecommendation | null;
+}
+
+const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song }) => {
+    if (!song) return null;
+
+    const handlePlayOnYouTube = () => {
+        const url = song.youtubeVideoId
+            ? `https://www.youtube.com/watch?v=${song.youtubeVideoId}`
+            : `https://www.youtube.com/results?search_query=${encodeURIComponent(song.searchQuery)}`;
+        window.open(url, '_blank');
+        onClose();
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]"
+                    />
+
+                    {/* Sheet */}
+                    <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="fixed bottom-0 left-0 right-0 z-[120] flex justify-center"
+                    >
+                        <div className="w-full max-w-md bg-[#191022]/95 backdrop-blur-2xl rounded-t-3xl border-t border-primary/20 shadow-2xl overflow-hidden pb-8 px-4">
+                            {/* Drag Indicator */}
+                            <div className="w-full flex justify-center pt-3 pb-2">
+                                <div className="w-9 h-1.5 bg-white/20 rounded-full"></div>
+                            </div>
+
+                            {/* Song Info Header */}
+                            <div className="px-4 py-4 flex items-center border-b border-white/5 mb-2">
+                                <div className="w-14 h-14 rounded-lg overflow-hidden mr-4 shadow-lg border border-white/10 shrink-0">
+                                    <img
+                                        src={song.youtubeVideoId ? `https://img.youtube.com/vi/${song.youtubeVideoId}/hqdefault.jpg` : song.thumbnail}
+                                        alt={song.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <h3 className="text-white text-lg font-bold truncate">{song.title}</h3>
+                                    <p className="text-slate-400 text-sm truncate">{song.artist} • {song.duration}</p>
+                                </div>
+                            </div>
+
+                            {/* Menu Options */}
+                            <div className="space-y-1">
+                                <button
+                                    onClick={handlePlayOnYouTube}
+                                    className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined text-red-500">play_circle</span>
+                                    </div>
+                                    <span className="text-white text-lg font-medium text-left">Open in YouTube</span>
+                                    <span className="material-symbols-outlined ml-auto text-slate-500">open_in_new</span>
+                                </button>
+
+                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined text-primary">playlist_play</span>
+                                    </div>
+                                    <span className="text-white text-lg font-medium text-left">Play Next</span>
+                                </button>
+
+                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined text-primary">playlist_add</span>
+                                    </div>
+                                    <span className="text-white text-lg font-medium text-left">Add to My Playlist</span>
+                                </button>
+
+                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined text-primary">ios_share</span>
+                                    </div>
+                                    <span className="text-white text-lg font-medium text-left">Share with Friends</span>
+                                </button>
+
+                                <div className="h-px bg-white/5 mx-4 my-2"></div>
+
+                                <button className="w-full flex items-center p-4 rounded-2xl hover:bg-white/5 active:bg-white/10 transition-all group">
+                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined text-slate-400">block</span>
+                                    </div>
+                                    <span className="text-slate-300 text-lg font-medium text-left">Don't Recommend Style</span>
+                                </button>
+
+                                <button
+                                    onClick={onClose}
+                                    className="w-full text-white/40 font-semibold py-4 mt-2"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+};
+
+export default ActionSheet;
