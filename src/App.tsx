@@ -25,13 +25,8 @@ const App: React.FC = () => {
     setState('ANALYSIS');
     setError(null);
 
-    // first, use the passed type, if not, infer it
-    let inputType: "text" | "gallery" | "camera" = type || "text";
-
-    // if there is an image but type is not specified, set it to camera
-    if (imageFile && inputType === "text") {
-      inputType = "camera"; // if there is an image but type is not specified, set it to camera
-    }
+    // type is passed, set it to camera if there is an image, otherwise set it to text
+    const inputType = type || (imageFile ? "camera" : "text");
 
     // state update (this value is passed to EmotionResult)
     setLastInputType(inputType);
