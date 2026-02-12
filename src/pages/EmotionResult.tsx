@@ -2,19 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { AnalysisResult } from '../services/ai';
 import { getMoodImageDetailed } from '../services/unsplash';
+import { saveMoodResult } from "../services/moodService";
 
 interface EmotionResultProps {
     result: AnalysisResult;
     onShowRecommendations: () => void;
     onBack: () => void;
+    imageFile?: File; // camera or gallery image file
+    inputType: "text" | "gallery" | "camera"; // input type
+    userInputText?: string; // user input text (diary content etc)
 }
 
-const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendations, onBack }) => {
+const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendations, onBack, imageFile, inputType, userInputText }) => {
+
     const { headline, emotions, summary } = result;
     const [moodImage, setMoodImage] = useState<string>('');
+    const [isSaved, setIsSaved] = useState(false); // prevent duplicate saving
 
+    // 1. Fetch mood-related image based on the headline
     useEffect(() => {
-        // Fetch mood-related image based on the headline
         const fetchMoodImage = async () => {
             console.log('EmotionResult: Fetching image for headline:', headline);
             const imageUrl = await getMoodImageDetailed(headline);
@@ -23,6 +29,36 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
         };
         fetchMoodImage();
     }, [headline]);
+
+    // Save analysis results to Firestore (automatic execution)
+    useEffect(() => {
+        const handleAutoSave = async () => {
+            // prevent duplicate saving
+            if (isSaved || !result) return;
+
+            // convert userMood format (label -> emotion, value -> score)
+            const formattedMood = emotions.map(e => ({
+                emotion: e.label,
+                score: e.value
+            }));
+
+            try {
+                await saveMoodResult({
+                    userMood: formattedMood,
+                    inputType: inputType,
+                    // if image, save summary, if text, save original input
+                    userInput: inputType === 'text' ? (userInputText || summary) : summary,
+                    imageFile: imageFile || null
+                });
+                setIsSaved(true); // save complete
+                console.log("EmotionResult: Data saved to Firestore successfully.");
+            } catch (error) {
+                console.error("EmotionResult: Failed to save data.", error);
+            }
+        };
+
+        handleAutoSave();
+    }, [result, imageFile, inputType, userInputText, isSaved]);
 
     // Log whenever moodImage changes
     useEffect(() => {

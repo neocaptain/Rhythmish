@@ -16,10 +16,26 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>('HOME');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // analysis metadata storage state
+  const [lastInputType, setLastInputType] = useState<"text" | "gallery" | "camera">("text");
+  const [lastInputText, setLastInputText] = useState<string>("");
+  const [lastImageFile, setLastImageFile] = useState<File | undefined>(undefined);
 
-  const handleAnalyze = async (text: string, imageFile?: File) => {
+  const handleAnalyze = async (text: string, imageFile?: File, inputType?: "text" | "gallery" | "camera") => {
     setState('ANALYSIS');
     setError(null);
+
+    // input type and data storage
+    if (inputType === "camera" || inputType === "gallery") {
+      // if there is an image, camera or gallery
+      setLastInputType(inputType);
+      setLastImageFile(imageFile);
+      setLastInputText(""); // image analysis result summary
+    } else {
+      setLastInputType("text");
+      setLastInputText(text);
+      setLastImageFile(undefined);
+    }
 
     try {
       const result = await analyzeMood(text, imageFile);
@@ -143,7 +159,11 @@ const App: React.FC = () => {
                 result={analysisResult}
                 onShowRecommendations={handleShowRecommendations}
                 onBack={handleBackToHome}
+                imageFile={lastImageFile}
+                inputType={lastInputType}
+                userInputText={lastInputText}
               />
+
             </motion.div>
           )}
 
