@@ -7,13 +7,36 @@ interface MoodInputHomeProps {
     onAnalyze: (text: string, imageFile?: File, type?: "text" | "gallery" | "camera") => void;
 }
 
+// camera and gallery input refs
+const fileInputRef = useRef<HTMLInputElement>(null);    // for gallery
+const cameraInputRef = useRef<HTMLInputElement>(null);  // for camera
+
+// gallery file selection handler
+const handleGalleryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        setImageFile(file);
+        // pass "gallery" type to analysis page
+        onAnalyze(text, file, "gallery");
+    }
+};
+
+// camera capture handler
+const handleCameraChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        setImageFile(file);
+        // pass "camera" type to analysis page
+        onAnalyze(text, file, "camera");
+    }
+};
+
 const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
     const [text, setText] = useState('');
     const [user, setUser] = useState<User | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isListening, setIsListening] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -238,44 +261,35 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                     ref={fileInputRef}
                     className="hidden"
                     accept="image/*"
-                    onChange={handleFileChange}
+                    onChange={handleGalleryChange}
                 />
-                <button
-                    onClick={triggerFileInput}
-                    className="relative group overflow-hidden rounded-xl p-px transition-all hover:scale-[1.01] active:scale-[0.99] w-full"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-[#b066ff]"></div>
-                    <div className="relative flex items-center gap-4 bg-white dark:bg-background-dark rounded-[calc(1rem-1px)] p-6 transition-colors group-hover:bg-transparent min-h-[100px]">
-                        {imagePreview ? (
-                            <div className="relative w-full flex items-center gap-4">
-                                <img src={imagePreview} alt="Preview" className="size-16 rounded-lg object-cover border-2 border-white/20" />
-                                <div className="text-left flex-1 min-w-0">
-                                    <h3 className="text-slate-900 dark:text-white font-bold text-lg leading-tight truncate group-hover:text-white transition-colors">{imageFile?.name}</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5 group-hover:text-white/80 transition-colors">Tap Analyze to verify vibe</p>
-                                </div>
-                                <div
-                                    onClick={removeImage}
-                                    className="p-2 rounded-full hover:bg-white/20 text-slate-400 group-hover:text-white transition-colors"
-                                >
-                                    <span className="material-symbols-outlined">close</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20 text-primary group-hover:bg-white/20 group-hover:text-white transition-all">
-                                    <span className="material-symbols-outlined text-[32px]">add_a_photo</span>
-                                </div>
-                                <div className="text-left">
-                                    <h3 className="text-slate-900 dark:text-white font-bold text-lg leading-tight group-hover:text-white transition-colors">Visual Analysis</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5 group-hover:text-white/80 transition-colors">Capture or upload a photo of your vibe</p>
-                                </div>
-                                <div className="ml-auto text-slate-300 dark:text-white/20 group-hover:text-white transition-colors">
-                                    <span className="material-symbols-outlined">chevron_right</span>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </button>
+                <input
+                    type="file"
+                    ref={cameraInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    capture="environment" // mobile camera capture
+                    onChange={handleCameraChange}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                    {/* camera button */}
+                    <button
+                        onClick={() => cameraInputRef.current?.click()}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all"
+                    >
+                        <span className="material-symbols-outlined text-primary text-3xl">photo_camera</span>
+                        <span className="text-sm font-bold text-primary">Take Photo</span>
+                    </button>
+
+                    {/* gallery button */}
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
+                    >
+                        <span className="material-symbols-outlined text-indigo-500 text-3xl">image</span>
+                        <span className="text-sm font-bold text-indigo-500">Upload</span>
+                    </button>
+                </div>
             </div>
 
             {/* Background Glows */}
