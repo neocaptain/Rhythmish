@@ -75,13 +75,40 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
     };
 
 
+    // file input change handler
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             setImageFile(file);
-            // Auto-analyze when image is uploaded
-            onAnalyze(text, file);
+
+            // image preview generation logic
+            const reader = new FileReader();
+            reader.onloadend = () => setImagePreview(reader.result as string);
+            reader.readAsDataURL(file);
+
+            /*
+             * generally, it's different to tell if <input type="file"> is selected or taken by camera,
+             * but usually, on mobile, if it's taken by camera, the filename will have 'capture' or 'image' keywords.
+             * so, here we set "gallery" as default, and let the user decide finally.
+             */
+            onAnalyze(text, file, "gallery");
         }
+    };
+
+    // analize button click handler
+    const handleAnalyzeClick = () => {
+        if (!text && !imageFile) return;
+
+        let inputType: "text" | "gallery" | "camera" = "text";
+
+        if (imageFile) {
+            // if there is an image file, set input type to "gallery"
+            inputType = "gallery";
+        } else if (text) {
+            inputType = "text";
+        }
+
+        onAnalyze(text, imageFile || undefined, inputType);
     };
 
     const triggerFileInput = () => {
@@ -187,9 +214,10 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                             </div>
                         </div>
                     </div>
+                    {/* change Analyze Mood button call method */}
                     <button
-                        onClick={() => (text || imageFile) && onAnalyze(text, imageFile || undefined)}
-                        className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-[50px] px-5 bg-primary text-white text-base font-bold leading-normal tracking-wide shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+                        onClick={handleAnalyzeClick}
+                        className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-[50px] px-5 bg-primary text-white text-base font-bold shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
                         disabled={!text && !imageFile}
                     >
                         <span className="material-symbols-outlined mr-2">psychology</span>
