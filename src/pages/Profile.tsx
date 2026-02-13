@@ -1,156 +1,146 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { auth, db } from '../services/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { MOOD_DICTIONARY } from '../constants/moods';
 
-interface ProfileProps {
-    onBack: () => void;
-}
-
-const Profile: React.FC<ProfileProps> = () => {
-    const [favoriteCount, setFavoriteCount] = useState(0);
+const Profile: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const user = auth.currentUser;
+    const [stats, setStats] = useState({
+        totalAnalyses: 0,
+        topMood: 'Peaceful',
+        likedCount: 0,
+        playlistCount: 0
+    });
+    const [recentHistory, setRecentHistory] = useState<any[]>([]);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            const user = auth.currentUser;
+        const fetchUserData = async () => {
             if (!user) return;
 
-            const q = query(collection(db, "liked_songs"), where("userId", "==", user.uid));
-            const querySnapshot = await getDocs(q);
-            setFavoriteCount(querySnapshot.size);
+            // 1. Fetch Stats (History, Likes, Playlists)
+            const historyQ = query(collection(db, "mood_history"), where("userId", "==", user.uid));
+            const likesQ = query(collection(db, "liked_songs"), where("userId", "==", user.uid));
+            const playlistQ = query(collection(db, "user_playlists"), where("userId", "==", user.uid));
+
+            const [historySnap, likesSnap, playlistSnap] = await Promise.all([
+                getDocs(historyQ), getDocs(likesQ), getDocs(playlistQ)
+            ]);
+
+            // 2. Simple Mood Analysis (Count most frequent mood)
+            const moodCounts: Record<string, number> = {};
+            historySnap.docs.forEach(doc => {
+                const mood = doc.data().userMood[0].emotion;
+                moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+            });
+            const topMood = Object.keys(moodCounts).reduce((a, b) => moodCounts[a] > moodCounts[b] ? a : b, 'Peaceful');
+
+            setStats({
+                totalAnalyses: historySnap.size,
+                topMood: topMood,
+                likedCount: likesSnap.size,
+                playlistCount: playlistSnap.size
+            });
+
+            // 3. Fetch Recent History for Timeline
+            const recentQ = query(
+                collection(db, "mood_history"),
+                where("userId", "==", user.uid),
+                orderBy("createdAt", "desc"),
+                limit(5)
+            );
+            const recentSnap = await getDocs(recentQ);
+            setRecentHistory(recentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         };
-        fetchStats();
-    }, []);
 
-    const calendarDays = [
-        { day: 28, emoji: null, color: null }, { day: 29, emoji: null, color: null }, { day: 30, emoji: null, color: null },
-        { day: 1, emoji: '🔥', color: 'bg-orange-400' }, { day: 2, emoji: '🌊', color: 'bg-blue-400' },
-        { day: 3, emoji: '✨', color: 'bg-primary' }, { day: 4, emoji: '✨', color: 'bg-primary' },
-        { day: 5, emoji: '🌿', color: 'bg-emerald-400' }, { day: 6, emoji: '🌿', color: 'bg-emerald-400' },
-        { day: 7, emoji: '🔥', color: 'bg-orange-400' }, { day: 8, emoji: '🔥', color: 'bg-orange-400' },
-        { day: 9, emoji: '🌊', color: 'bg-blue-400' }, { day: 10, emoji: '💖', color: 'bg-pink-400' },
-        { day: 11, emoji: '💖', color: 'bg-pink-400' }, { day: 12, emoji: '✨', color: 'bg-primary' },
-        { day: 13, emoji: '🌿', color: 'bg-emerald-400' }, { day: 14, emoji: '🌿', color: 'bg-emerald-400' },
-        { day: 15, emoji: '🔥', color: 'bg-orange-400' }, { day: 16, emoji: '🔥', color: 'bg-orange-400' },
-        { day: 17, emoji: '✨', color: 'bg-primary', active: true }, { day: 18, emoji: null, color: 'bg-slate-700' },
-        { day: 19, emoji: null, color: 'bg-slate-700' }, { day: 20, emoji: null, color: 'bg-slate-700' },
-        { day: 21, emoji: null, color: 'bg-slate-700' }, { day: 22, emoji: null, color: 'bg-slate-700' },
-        { day: 23, emoji: null, color: 'bg-slate-700' }, { day: 24, emoji: null, color: 'bg-slate-700' },
-    ];
-
-    const vibeStats = [
-        { label: "Energetic", value: 70, color: "bg-primary" },
-        { label: "Calm & Lo-Fi", value: 22, color: "bg-emerald-400" },
-        { label: "Melancholic", value: 8, color: "bg-blue-400" },
-    ];
-
-    const badges = [
-        { label: "First Analysis", icon: "insights", grad: "from-primary to-purple-400" },
-        { label: "10 Favorites", icon: "favorite", grad: "from-orange-400 to-yellow-300", locked: favoriteCount < 10 },
-        { label: "Night Owl", icon: "nights_stay", grad: "from-emerald-400 to-cyan-400" },
-        { label: "Trendsetter", icon: "lock", locked: true },
-        { label: "Explorer", icon: "lock", locked: true },
-    ];
+        fetchUserData();
+    }, [user]);
 
     return (
-        <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-y-auto no-scrollbar pb-32">
-            <div className="h-4 w-full shrink-0"></div>
-            <main className="max-w-md mx-auto px-6">
-                {/* Profile Header */}
-                <header className="flex flex-col items-center mt-4 mb-8">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse"></div>
-                        <img
-                            alt="User Profile"
-                            className="relative w-24 h-24 rounded-full border-2 border-primary object-cover"
-                            src={auth.currentUser?.photoURL || "https://lh3.googleusercontent.com/aida-public/AB6AXuASwRYiETk6H-n_QDaoDgVFZ1_6dz9mCfnXA6S80oU3_ndVpsclDESkjj1ckQvWixtHshVBqzw5NjPTPC-vfpnfWL4d_EH6GuqFaGTQNzl9d_G7UYsbIDbceux_nr3NhLa5AgmMVP8SQNdwsNEzZkTAQOmw7aU04JxtfwkaWf5Lh3S6aVMqSX__cpzKHKXmee3W3suGnDDRTO1suY5fpEiNJGfmubNA6i4q1cGFhfFX583k1_yAVCxlpkJdpJliKBZDMd2-xPojrW9i"}
-                        />
-                        <div className="absolute bottom-0 right-0 bg-primary p-1.5 rounded-full border-2 border-background-dark">
-                            <span className="material-symbols-outlined text-white text-[12px] fill-1">verified</span>
-                        </div>
-                    </div>
-                    <h1 className="text-2xl font-bold mt-4 tracking-tight">{auth.currentUser?.displayName || "Alex Rivera"}</h1>
-                    <p className="text-primary/70 text-sm font-medium">Sonic Explorer • Level 12</p>
-                </header>
+        <div className="flex-1 flex flex-col h-full bg-background-light dark:bg-background-dark overflow-y-auto no-scrollbar pb-24">
+            {/* Header Area */}
+            <header className="px-6 pt-12 pb-8 text-center relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] -z-10 rounded-full" />
 
-                {/* Emotion Calendar Section */}
-                <section className="mb-8">
-                    <div className="flex justify-between items-end mb-4">
-                        <h2 className="text-lg font-bold">Emotion Calendar</h2>
-                        <span className="text-xs text-slate-400">October 2025</span>
+                <div className="relative inline-block mb-4">
+                    <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 shadow-2xl overflow-hidden mx-auto">
+                        <img src={user?.photoURL || ''} alt="User" className="w-full h-full object-cover" />
                     </div>
-                    <div className="bg-primary/5 dark:bg-white/5 backdrop-blur-md border border-primary/10 p-5 rounded-3xl">
-                        <div className="grid grid-cols-7 gap-3 mb-4 text-center">
-                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-                                <span key={i} className="text-[10px] uppercase font-bold text-slate-500">{d}</span>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-3">
-                            {calendarDays.map((d, i) => (
-                                <div
-                                    key={i}
-                                    className={`aspect-square flex items-center justify-center text-[10px] rounded-full transition-all duration-300 ${d.color || 'text-slate-500'} ${d.active ? 'ring-2 ring-white ring-offset-2 ring-offset-background-dark shadow-lg shadow-primary/40' : ''}`}
-                                >
-                                    {d.emoji || d.day}
-                                </div>
-                            ))}
-                        </div>
+                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-lg">
+                        <span className="material-symbols-outlined text-white text-sm fill-1">auto_awesome</span>
                     </div>
-                </section>
+                </div>
 
-                {/* Monthly Vibe Summary */}
-                <section className="mb-8">
-                    <h2 className="text-lg font-bold mb-4">This Month's Vibe</h2>
-                    <div className="bg-primary/5 dark:bg-white/5 backdrop-blur-md border border-primary/10 p-6 rounded-3xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="text-sm font-medium">Dominant: <span className="text-primary font-bold">Energetic</span></span>
-                            <span className="text-xs text-slate-400 italic">Analysis of {favoriteCount * 5 + 142} songs</span>
-                        </div>
-                        <div className="space-y-4">
-                            {vibeStats.map((v, i) => (
-                                <div key={i}>
-                                    <div className="flex justify-between text-xs mb-1.5 font-semibold">
-                                        <span>{v.label}</span>
-                                        <span className="font-bold">{v.value}%</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${v.value}%` }}
-                                            transition={{ duration: 1, delay: i * 0.2 }}
-                                            className={`h-full ${v.color} rounded-full`}
-                                        ></motion.div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <button className="w-full mt-6 py-3 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-bold rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
-                            <span className="material-symbols-outlined text-sm">share</span>
-                            Share Insights
-                        </button>
-                    </div>
-                </section>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">
+                    {user?.displayName}'s Rhythm
+                </h1>
+                <p className="text-sm text-slate-500 font-medium">Tracking your soul since 2026</p>
+            </header>
 
-                {/* Badges & Achievements */}
-                <section className="mb-4">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold">Achievements</h2>
-                        <button className="text-primary text-xs font-bold uppercase tracking-wider">View All</button>
-                    </div>
-                    <div className="flex gap-6 overflow-x-auto no-scrollbar pb-4">
-                        {badges.map((b, i) => (
-                            <div key={i} className={`flex flex-col items-center flex-shrink-0 transition-opacity duration-500 ${b.locked ? 'opacity-30' : 'opacity-100'}`}>
-                                <div className={`w-16 h-16 rounded-full bg-gradient-to-tr ${b.grad || 'from-slate-600 to-slate-400'} p-[2px] mb-2 shadow-lg`}>
-                                    <div className="w-full h-full rounded-full bg-background-light dark:bg-background-dark flex items-center justify-center">
-                                        <span className={`material-symbols-outlined text-2xl ${b.locked ? 'text-slate-500' : 'text-primary'}`}>{b.locked ? 'lock' : b.icon}</span>
-                                    </div>
-                                </div>
-                                <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-300 text-center w-20">{b.label}</span>
+            {/* Insight Card: Current Vibe */}
+            <section className="px-6 mb-8">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass-card rounded-3xl p-6 border-t border-white/20 shadow-xl overflow-hidden relative"
+                >
+                    <div className="relative z-10">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-4">Core Emotion</p>
+                        <div className="flex items-center gap-4 mb-4">
+                            <span className="text-5xl">{MOOD_DICTIONARY[stats.topMood]?.emoji || '🌿'}</span>
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+                                    Mainly <span className={MOOD_DICTIONARY[stats.topMood]?.color}>{stats.topMood}</span>
+                                </h2>
+                                <p className="text-sm text-slate-500">Based on your last {stats.totalAnalyses} records</p>
                             </div>
-                        ))}
+                        </div>
                     </div>
-                </section>
-            </main>
+                </motion.div>
+            </section>
+
+            {/* Quick Stats Grid */}
+            <section className="px-6 grid grid-cols-2 gap-4 mb-8">
+                <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-primary">{stats.likedCount}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Likes</span>
+                </div>
+                <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-primary">{stats.playlistCount}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Playlist</span>
+                </div>
+            </section>
+
+            {/* Emotional Journey (Timeline) */}
+            <section className="px-6 mb-8">
+                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6 px-1">Emotional Journey</h3>
+                <div className="space-y-6 relative">
+                    <div className="absolute left-4 top-2 bottom-2 w-px bg-slate-200 dark:bg-white/5" />
+
+                    {recentHistory.map((item, idx) => (
+                        <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="flex gap-6 relative"
+                        >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-lg ${MOOD_DICTIONARY[item.userMood[0].emotion]?.color.replace('text', 'bg')}/20 bg-white dark:bg-slate-800`}>
+                                <span className="text-sm">{MOOD_DICTIONARY[item.userMood[0].emotion]?.emoji}</span>
+                            </div>
+                            <div className="flex-1 pb-6 border-b border-slate-100 dark:border-white/5 last:border-0">
+                                <p className="text-xs text-slate-400 mb-1">
+                                    {item.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </p>
+                                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Feeling {item.userMood[0].emotion}
+                                </h4>
+                                <p className="text-xs text-slate-500 italic">"{item.userInputText?.slice(0, 40)}..."</p>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 };

@@ -1,5 +1,6 @@
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 
 export const handleSongActions = {
     // 1. Open in YouTube
@@ -27,23 +28,33 @@ export const handleSongActions = {
     },
 
     // 4. Share with Mood Analysis Result
-    shareSongWithMood: async (songTitle: string, mood: string) => {
+    shareSongWithMood: async (songTitle: string, mood: string, videoId?: string) => {
+        // 1. Generate YouTube link if videoId exists
+        const youtubeUrl = videoId
+            ? `https://www.youtube.com/watch?v=${videoId}`
+            : "";
+
         const shareData = {
             title: 'Rhythmish Mood Discovery',
-            text: `I'm feeling "${mood}" today and found this perfect track: ${songTitle}! Check my rhythm on Rhythmish.`,
-            url: window.location.href, // Or your app's deployment URL
+            text: `I'm feeling "${mood}" today and found this perfect track: ${songTitle}! Check it out on YouTube.`,
+            url: youtubeUrl || window.location.href, // Fallback to app URL if no videoId
         };
 
         try {
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                // Fallback for browsers that don't support Web Share API
-                await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-                alert("Link copied to clipboard!");
+                // Fallback for browsers (desktop, etc.)
+                const fullText = `${shareData.text} ${shareData.url}`;
+                await navigator.clipboard.writeText(fullText);
+                // Using toast instead of alert for better UI
+                toast.success("Link copied to clipboard!");
             }
         } catch (error) {
-            console.error("Error sharing:", error);
+            // Ignore abort errors (when user cancels sharing)
+            if (error instanceof Error && error.name !== 'AbortError') {
+                console.error("Error sharing:", error);
+            }
         }
     }
 };

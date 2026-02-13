@@ -48,7 +48,12 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, song, curren
                 break;
 
             case 'SHARE':
-                await handleSongActions.shareSongWithMood(song.title, currentMood);
+                // Pass the song's YouTube Video ID as the third argument
+                await handleSongActions.shareSongWithMood(
+                    song.title,
+                    currentMood,
+                    song.youtubeVideoId
+                );
                 break;
 
             case 'DISLIKE':
