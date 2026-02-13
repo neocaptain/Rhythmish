@@ -99,6 +99,7 @@ const App: React.FC = () => {
   );
 
   return (
+<<<<<<< Updated upstream
     <div className="bg-background-light dark:bg-background-dark min-h-screen">
       {/* 2. Add Toaster here for global availability */}
       <Toaster
@@ -117,6 +118,28 @@ const App: React.FC = () => {
       />
 
       <div className="app-container">
+=======
+    /* 1. all container: h-screen to fix height and flex-col to layout */
+    <div className="bg-background-light dark:bg-background-dark h-screen flex flex-col overflow-hidden">
+      <Toaster position="top-center" />
+
+      {/* 2. top area: only show when HOME, fixed height(shrink-0) */}
+      {state === 'HOME' && (
+        <header className="px-6 pt-6 pb-2 flex justify-between items-center shrink-0 z-50">
+          <h1 className="text-xl font-black tracking-tighter text-primary">Rhythmish</h1>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <img src={user.photoURL || ''} alt="Profile" className="w-8 h-8 rounded-full border border-primary/20" />
+            ) : (
+              <button className="text-sm font-bold text-primary">Login</button>
+            )}
+          </div>
+        </header>
+      )}
+
+      {/* 3. main content area: flex-1 to take up remaining space, internal scrolling */}
+      <main className="flex-1 relative overflow-y-auto no-scrollbar">
+>>>>>>> Stashed changes
         {error && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium">
             {error}
@@ -254,7 +277,17 @@ const App: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+<<<<<<< Updated upstream
       </div>
+=======
+      </main>
+      {/* 4. bottom navigation: always fixed at bottom (hide when ANALYSIS) */}
+      {state !== 'ANALYSIS' && (
+        <nav className="shrink-0 z-50">
+          {renderBottomNav()}
+        </nav>
+      )}
+>>>>>>> Stashed changes
     </div>
   );
 };

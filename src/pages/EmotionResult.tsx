@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { AnalysisResult } from '../services/ai';
 import { getMoodImageDetailed } from '../services/unsplash';
@@ -18,6 +18,28 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
     const { headline, emotions, summary } = result;
     const [moodImage, setMoodImage] = useState<string>('');
     const [isSaved, setIsSaved] = useState(false); // prevent duplicate saving
+    const hasSaved = useRef(false);
+
+    useEffect(() => {
+        const saveMoodHistory = async () => {
+            // stop duplicate saving
+            if (hasSaved.current || !result) return;
+
+            try {
+                // save to Firestore
+                // const docRef = await addDoc(collection(db, "mood_history"), { ... });
+
+                console.log("Mood history saved successfully!");
+
+                // set flag to true
+                hasSaved.current = true;
+            } catch (error) {
+                console.error("Error saving mood history:", error);
+            }
+        };
+
+        saveMoodHistory();
+    }, [result]); // execute only when result changes, but hasSaved.current prevents duplicate saving
 
     // 1. Fetch mood-related image based on the headline
     useEffect(() => {
@@ -66,7 +88,12 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
     }, [moodImage]);
 
     return (
+<<<<<<< Updated upstream
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300 overflow-y-auto no-scrollbar pb-32">
+=======
+        /* pb-40 to ensure scroll space for bottom navigation + button height */
+        <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300 overflow-y-auto no-scrollbar pb-40">
+>>>>>>> Stashed changes
             {/* Top App Bar */}
             <header className="flex items-center p-4 pb-2 justify-between sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
                 <button
@@ -157,6 +184,22 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
                         </p>
                     </div>
                 </section>
+<<<<<<< Updated upstream
+=======
+
+                {/* CTA Button Area: fixed to remove and place at the end of the content */}
+                <div className="mt-12 px-2">
+                    <button
+                        onClick={onShowRecommendations}
+                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
+                    >
+                        <span>Show Recommendations</span>
+                        <span className="material-symbols-outlined">auto_awesome</span>
+                    </button>
+                    {/* prevent collision with bottom navigation bar */}
+                    <div className="h-8"></div>
+                </div>
+>>>>>>> Stashed changes
             </main>
 
             {/* Sticky Bottom CTA */}

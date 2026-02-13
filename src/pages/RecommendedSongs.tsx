@@ -57,11 +57,16 @@ const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, onBack, onR
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300 overflow-y-auto no-scrollbar">
             {/* Header */}
             <header className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5">
+<<<<<<< Updated upstream
                 <button
                     onClick={onBack}
                     className="w-10 h-10 flex items-center justify-start text-slate-700 dark:text-white"
                 >
                     <span className="material-symbols-outlined text-[28px]">chevron_left</span>
+=======
+                <button onClick={onBack} className="w-10 h-10 flex items-center justify-end text-slate-700 dark:text-white">
+                    <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+>>>>>>> Stashed changes
                 </button>
                 <h1 className="text-lg font-semibold tracking-tight">Sounds for your Mood</h1>
                 <button className="w-10 h-10 flex items-center justify-end text-slate-700 dark:text-white">
