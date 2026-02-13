@@ -313,7 +313,74 @@ const PersonalizedMixtape: React.FC<PersonalizedMixtapeProps> = ({
             {/* Modals & Sheets (Always present in DOM) */}
             <AnimatePresence>
                 {selectedSong && analysisResult && (
-                    /* ... (기존 Match Reason Modal 코드 동일) ... */
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedSong(null)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white dark:bg-[#211b27] rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-white/10"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Why {selectedSong.matchScore}% Match?</h3>
+                                <button onClick={() => setSelectedSong(null)} className="size-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
+                                </button>
+                            </div>
+                            <div className="space-y-6">
+                                <div className="space-y-5">
+                                    {analysisResult.emotions.map((userEmotion, idx) => {
+                                        const songEmotion = selectedSong.emotions.find(e => e.label === userEmotion.label);
+                                        return (
+                                            <div key={userEmotion.label} className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-bold flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                                                        <span className={`material-symbols-outlined ${userEmotion.color} text-base`}>{userEmotion.icon}</span>
+                                                        {userEmotion.label}
+                                                    </span>
+                                                    <div className="flex gap-4">
+                                                        <span className="text-[10px] font-black text-slate-400">{userEmotion.value}%</span>
+                                                        <span className="text-[10px] font-black text-primary">{songEmotion?.value || 0}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${userEmotion.value}%` }}
+                                                        transition={{ delay: idx * 0.1, duration: 0.8 }}
+                                                        className="absolute inset-y-0 left-0 bg-primary/20 rounded-full"
+                                                    />
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${songEmotion?.value || 0}%` }}
+                                                        transition={{ delay: idx * 0.1 + 0.2, duration: 0.8 }}
+                                                        className="absolute inset-y-0 left-0 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="pt-2 border-t border-slate-200 dark:border-white/10">
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                        <strong>{selectedSong.title}</strong> by {selectedSong.artist} scored <strong>{selectedSong.matchScore}%</strong> because it aligns with your profile.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedSong(null)}
+                                className="w-full mt-6 bg-primary text-white font-semibold py-3 rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                Got it!
+                            </button>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
