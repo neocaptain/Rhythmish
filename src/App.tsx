@@ -10,6 +10,7 @@ import Discover from './pages/Discover';
 import Profile from './pages/Profile';
 import PersonalizedMixtape from './pages/PersonalizedMixtape';
 import { analyzeMood } from './services/ai';
+import { auth } from './services/firebase';
 import type { AnalysisResult } from './services/ai';
 
 type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS' | 'FAVORITES' | 'DISCOVER' | 'PROFILE' | 'MIXTAPE';
@@ -18,6 +19,8 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>('HOME');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const user = auth.currentUser;
 
   const [lastInputType, setLastInputType] = useState<"text" | "gallery" | "camera">("text");
   const [lastInputText, setLastInputText] = useState<string>("");
@@ -99,26 +102,6 @@ const App: React.FC = () => {
   );
 
   return (
-<<<<<<< Updated upstream
-    <div className="bg-background-light dark:bg-background-dark min-h-screen">
-      {/* 2. Add Toaster here for global availability */}
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          className: 'dark:bg-slate-800 dark:text-white',
-          duration: 3000,
-          style: {
-            borderRadius: '12px',
-            background: '#1e1b4b',
-            color: '#fff',
-            fontSize: '14px',
-            fontWeight: '600'
-          }
-        }}
-      />
-
-      <div className="app-container">
-=======
     /* 1. all container: h-screen to fix height and flex-col to layout */
     <div className="bg-background-light dark:bg-background-dark h-screen flex flex-col overflow-hidden">
       <Toaster position="top-center" />
@@ -139,36 +122,21 @@ const App: React.FC = () => {
 
       {/* 3. main content area: flex-1 to take up remaining space, internal scrolling */}
       <main className="flex-1 relative overflow-y-auto no-scrollbar">
->>>>>>> Stashed changes
         {error && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium">
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-red-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium">
             {error}
           </div>
         )}
+
         <AnimatePresence mode="wait">
           {state === 'HOME' && (
-            <motion.div
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="h-full flex flex-col"
-            >
-              <div className="flex-1 overflow-y-auto no-scrollbar">
-                <MoodInputHome onAnalyze={handleAnalyze} />
-              </div>
-              {renderBottomNav()}
+            <motion.div key="home" className="min-h-full">
+              <MoodInputHome onAnalyze={handleAnalyze} />
             </motion.div>
           )}
 
           {state === 'ANALYSIS' && (
-            <motion.div
-              key="analysis"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="h-full"
-            >
+            <motion.div key="analysis" className="min-h-full">
               <MoodAnalysis
                 onComplete={handleAnalysisComplete}
                 onCancel={handleBackToHome}
@@ -177,13 +145,7 @@ const App: React.FC = () => {
           )}
 
           {state === 'RESULT' && analysisResult && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="h-full"
-            >
+            <motion.div key="result" className="min-h-full">
               <EmotionResult
                 result={analysisResult}
                 onShowRecommendations={handleShowRecommendations}
@@ -196,13 +158,7 @@ const App: React.FC = () => {
           )}
 
           {state === 'RECOMMENDATIONS' && analysisResult && (
-            <motion.div
-              key="recommendations"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="h-full"
-            >
+            <motion.div key="recommendations" className="min-h-full">
               <RecommendedSongs
                 result={analysisResult}
                 onBack={() => setState('RESULT')}
@@ -212,74 +168,38 @@ const App: React.FC = () => {
           )}
 
           {state === 'FAVORITES' && (
-            <motion.div
-              key="favorites"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="h-full flex flex-col"
-            >
+            <motion.div key="favorites" className="min-h-full">
               <div className="flex-1 overflow-hidden">
                 <FavoriteSongs
                   onBack={handleBackToHome}
                 />
               </div>
-              {renderBottomNav()}
             </motion.div>
           )}
 
           {state === 'DISCOVER' && (
-            <motion.div
-              key="discover"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="h-full flex flex-col"
-            >
+            <motion.div key="discover" className="min-h-full">
               <div className="flex-1 overflow-hidden">
                 <Discover onShowMixtape={handleShowMixtape} />
               </div>
-              {renderBottomNav()}
             </motion.div>
           )}
 
           {state === 'PROFILE' && (
-            <motion.div
-              key="profile"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="h-full flex flex-col"
-            >
-              <div className="flex-1 overflow-hidden">
-                <Profile onBack={handleBackToHome} />
-              </div>
-              {renderBottomNav()}
+            <motion.div key="profile" className="min-h-full">
+              <Profile onBack={handleBackToHome} />
             </motion.div>
           )}
 
           {state === 'MIXTAPE' && (
-            <motion.div
-              key="mixtape"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="h-full flex flex-col"
-            >
-              <div className="flex-1 overflow-hidden">
-                {/* 3. PersonalizedMixtape might need back functionality */}
-                <PersonalizedMixtape
-                  currentMoodResult={analysisResult?.emotions[0]?.label}
-                  onBack={handleShowDiscover}
-                />
-              </div>
-              {renderBottomNav()}
+            <motion.div key="mixtape" className="min-h-full">
+              <PersonalizedMixtape
+                currentMoodResult={analysisResult?.emotions[0]?.label}
+                onBack={handleShowDiscover}
+              />
             </motion.div>
           )}
         </AnimatePresence>
-<<<<<<< Updated upstream
-      </div>
-=======
       </main>
       {/* 4. bottom navigation: always fixed at bottom (hide when ANALYSIS) */}
       {state !== 'ANALYSIS' && (
@@ -287,7 +207,6 @@ const App: React.FC = () => {
           {renderBottomNav()}
         </nav>
       )}
->>>>>>> Stashed changes
     </div>
   );
 };

@@ -88,12 +88,8 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
     }, [moodImage]);
 
     return (
-<<<<<<< Updated upstream
-        <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300 overflow-y-auto no-scrollbar pb-32">
-=======
         /* pb-40 to ensure scroll space for bottom navigation + button height */
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300 overflow-y-auto no-scrollbar pb-40">
->>>>>>> Stashed changes
             {/* Top App Bar */}
             <header className="flex items-center p-4 pb-2 justify-between sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
                 <button
@@ -106,7 +102,7 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
             </header>
 
             {/* Main Content */}
-            <main className="px-6">
+            <main className="px-6 flex-1">
                 {/* Abstract Art / Mood Visualizer */}
                 <div className="flex w-full py-8">
                     <motion.div
@@ -114,7 +110,6 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
                         animate={{ scale: 1, opacity: 1 }}
                         className="relative w-full aspect-square rounded-3xl overflow-hidden flex items-center justify-center group"
                     >
-                        {/* Background Art */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 to-indigo-500/30 opacity-30"></div>
                         {moodImage ? (
                             <div
@@ -124,7 +119,6 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
                         ) : (
                             <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
                         )}
-                        {/* Glow effect */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary rounded-full blur-[80px] opacity-30"></div>
                     </motion.div>
                 </div>
@@ -184,8 +178,6 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
                         </p>
                     </div>
                 </section>
-<<<<<<< Updated upstream
-=======
 
                 {/* CTA Button Area: fixed to remove and place at the end of the content */}
                 <div className="mt-12 px-2">
@@ -199,20 +191,7 @@ const EmotionResult: React.FC<EmotionResultProps> = ({ result, onShowRecommendat
                     {/* prevent collision with bottom navigation bar */}
                     <div className="h-8"></div>
                 </div>
->>>>>>> Stashed changes
             </main>
-
-            {/* Sticky Bottom CTA */}
-            <footer className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-6 bg-gradient-to-t from-background-light via-background-light dark:from-background-dark dark:via-background-dark to-transparent z-20">
-                <button
-                    onClick={onShowRecommendations}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
-                >
-                    <span>Show Recommendations</span>
-                    <span className="material-symbols-outlined">auto_awesome</span>
-                </button>
-                <div className="h-4"></div>
-            </footer>
         </div>
     );
 };
