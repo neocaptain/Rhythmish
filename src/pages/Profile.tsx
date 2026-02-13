@@ -60,9 +60,18 @@ const Profile: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="flex-1 flex flex-col h-full bg-background-light dark:bg-background-dark overflow-y-auto no-scrollbar pb-24">
             {/* Header Area */}
             <header className="px-6 pt-12 pb-8 text-center relative overflow-hidden">
+                {/* 1. Added Back Button to use 'onBack' */}
+                <button
+                    onClick={onBack}
+                    className="absolute top-10 left-6 size-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors z-20"
+                >
+                    <span className="material-symbols-outlined">arrow_back</span>
+                </button>
+
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] -z-10 rounded-full" />
 
-                <div className="relative inline-block mb-4">
+                {/* Profile Image & Badge */}
+                <div className="relative inline-block mb-4 mt-4">
                     <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 shadow-2xl overflow-hidden mx-auto">
                         <img src={user?.photoURL || ''} alt="User" className="w-full h-full object-cover" />
                     </div>
