@@ -13,44 +13,68 @@ const Profile: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         playlistCount: 0
     });
     const [recentHistory, setRecentHistory] = useState<any[]>([]);
+    const [sinceYear, setSinceYear] = useState<number | string>("...."); // add sinceYear state
 
     useEffect(() => {
         const fetchUserData = async () => {
             if (!user) return;
 
-            // 1. Fetch Stats (History, Likes, Playlists)
-            const historyQ = query(collection(db, "mood_history"), where("userId", "==", user.uid));
-            const likesQ = query(collection(db, "liked_songs"), where("userId", "==", user.uid));
-            const playlistQ = query(collection(db, "user_playlists"), where("userId", "==", user.uid));
+            try {
+                // 1. get a oldest mood history document
+                const sinceQ = query(
+                    collection(db, "mood_history"),
+                    where("userId", "==", user.uid),
+                    orderBy("createdAt", "asc"), // 오름차순 (가장 오래된 것부터)
+                    limit(1)
+                );
 
-            const [historySnap, likesSnap, playlistSnap] = await Promise.all([
-                getDocs(historyQ), getDocs(likesQ), getDocs(playlistQ)
-            ]);
+                // 2. Fetch Stats (History, Likes, Playlists)
+                const historyQ = query(collection(db, "mood_history"), where("userId", "==", user.uid));
+                const likesQ = query(collection(db, "liked_songs"), where("userId", "==", user.uid));
+                const playlistQ = query(collection(db, "user_playlists"), where("userId", "==", user.uid));
 
-            // 2. Simple Mood Analysis (Count most frequent mood)
-            const moodCounts: Record<string, number> = {};
-            historySnap.docs.forEach(doc => {
-                const mood = doc.data().userMood[0].emotion;
-                moodCounts[mood] = (moodCounts[mood] || 0) + 1;
-            });
-            const topMood = Object.keys(moodCounts).reduce((a, b) => moodCounts[a] > moodCounts[b] ? a : b, 'Peaceful');
+                const [sinceSnap, historySnap, likesSnap, playlistSnap] = await Promise.all([
+                    getDocs(sinceQ), getDocs(historyQ), getDocs(likesQ), getDocs(playlistQ)
+                ]);
 
-            setStats({
-                totalAnalyses: historySnap.size,
-                topMood: topMood,
-                likedCount: likesSnap.size,
-                playlistCount: playlistSnap.size
-            });
+                // extract the year of the oldest mood history document
+                if (!sinceSnap.empty) {
+                    const firstDate = sinceSnap.docs[0].data().createdAt?.toDate();
+                    if (firstDate) {
+                        setSinceYear(firstDate.getFullYear());
+                    }
+                } else {
+                    setSinceYear(new Date().getFullYear());
+                }
 
-            // 3. Fetch Recent History for Timeline
-            const recentQ = query(
-                collection(db, "mood_history"),
-                where("userId", "==", user.uid),
-                orderBy("createdAt", "desc"),
-                limit(5)
-            );
-            const recentSnap = await getDocs(recentQ);
-            setRecentHistory(recentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                // 2. Simple Mood Analysis (Count most frequent mood)
+                const moodCounts: Record<string, number> = {};
+                historySnap.docs.forEach(doc => {
+                    const mood = doc.data().userMood[0].emotion;
+                    moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+                });
+                const topMood = Object.keys(moodCounts).reduce((a, b) => moodCounts[a] > moodCounts[b] ? a : b, 'Peaceful');
+
+                setStats({
+                    totalAnalyses: historySnap.size,
+                    topMood: topMood,
+                    likedCount: likesSnap.size,
+                    playlistCount: playlistSnap.size
+                });
+
+                // 3. Fetch Recent History for Timeline
+                const recentQ = query(
+                    collection(db, "mood_history"),
+                    where("userId", "==", user.uid),
+                    orderBy("createdAt", "desc"),
+                    limit(5)
+                );
+                const recentSnap = await getDocs(recentQ);
+                setRecentHistory(recentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+            } catch (error) {
+                console.error("Error fetching profile data:", error);
+            }
         };
 
         fetchUserData();
@@ -83,7 +107,7 @@ const Profile: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">
                     {user?.displayName}'s Rhythm
                 </h1>
-                <p className="text-sm text-slate-500 font-medium">Tracking your soul since 2026</p>
+                <p className="text-sm text-slate-500 font-medium">Tracking your soul since {sinceYear}</p>
             </header>
 
             {/* Insight Card: Current Vibe */}
@@ -126,28 +150,47 @@ const Profile: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="space-y-6 relative">
                     <div className="absolute left-4 top-2 bottom-2 w-px bg-slate-200 dark:bg-white/5" />
 
-                    {recentHistory.map((item, idx) => (
-                        <motion.div
-                            key={item.id}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="flex gap-6 relative"
-                        >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-lg ${MOOD_DICTIONARY[item.userMood[0].emotion]?.color.replace('text', 'bg')}/20 bg-white dark:bg-slate-800`}>
-                                <span className="text-sm">{MOOD_DICTIONARY[item.userMood[0].emotion]?.emoji}</span>
-                            </div>
-                            <div className="flex-1 pb-6 border-b border-slate-100 dark:border-white/5 last:border-0">
-                                <p className="text-xs text-slate-400 mb-1">
-                                    {item.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </p>
-                                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
-                                    Feeling {item.userMood[0].emotion}
-                                </h4>
-                                <p className="text-xs text-slate-500 italic">"{item.userInputText?.slice(0, 40)}..."</p>
-                            </div>
-                        </motion.div>
-                    ))}
+                    {recentHistory.map((item, idx) => {
+                        // Determine the preview text for the timeline
+                        const getPreviewText = () => {
+                            if (item.userInputText && item.userInputText.trim() !== "") {
+                                return `"${item.userInputText.slice(0, 40)}${item.userInputText.length > 40 ? '...' : ''}"`;
+                            }
+
+                            // Fallback messages based on input type or analysis headline
+                            if (item.inputType === "camera" || item.inputType === "gallery") {
+                                return item.headline ? `📸 ${item.headline}` : "🖼️ Captured a visual moment";
+                            }
+
+                            return "✨ Recorded a silent mood";
+                        };
+
+                        return (
+                            <motion.div
+                                key={item.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: idx * 0.1 }}
+                                className="flex gap-6 relative"
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 shadow-lg ${MOOD_DICTIONARY[item.userMood[0].emotion]?.color.replace('text', 'bg')}/20 bg-white dark:bg-slate-800`}>
+                                    <span className="text-sm">{MOOD_DICTIONARY[item.userMood[0].emotion]?.emoji}</span>
+                                </div>
+                                <div className="flex-1 pb-6 border-b border-slate-100 dark:border-white/5 last:border-0">
+                                    <p className="text-xs text-slate-400 mb-1">
+                                        {item.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </p>
+                                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                        Feeling {item.userMood[0].emotion}
+                                    </h4>
+                                    {/* enhanced text area */}
+                                    <p className="text-xs text-slate-500 italic font-medium">
+                                        {getPreviewText()}
+                                    </p>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             </section>
         </div>
