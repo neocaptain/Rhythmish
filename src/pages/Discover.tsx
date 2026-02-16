@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getTrendingMusic, getBrowserRegionCode } from '../services/youtube';
+import { useMoodStream } from '../hooks/useMoodStream';
+import type { MoodEntry } from '../hooks/useMoodStream';
 
 interface DiscoverProps {
     onShowMixtape: () => void;
@@ -9,6 +11,73 @@ interface DiscoverProps {
 const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
     const [trendingVideos, setTrendingVideos] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    // 1. realtime use count display function : set default value 1,200
+    const [onlineCount, setOnlineCount] = useState(1240);
+    const moodStream = useMoodStream();
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // timer: switch to next phrase every 3~4 seconds
+    useEffect(() => {
+        if (moodStream.length === 0) return;
+        const timer = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % moodStream.length);
+        }, 4000);
+        return () => clearInterval(timer);
+    }, [moodStream]);
+
+    // mood-label emoji matching function
+    const getEmoji = (label: string) => {
+        const emojis: Record<string, string> = {
+            'Joyful': '🎈', 'Energetic': '🔥', 'Dreamy': '☁️', 'Melancholic': '🌊', 'Relaxed': '🍃'
+        };
+        return emojis[label] || '✨';
+    };
+
+    // 1. 가장 많이 느끼는 감정 집계 함수
+    const getDominantMood = (stream: MoodEntry[]) => {
+        if (stream.length === 0) return "Mysterious";
+
+        const counts: Record<string, number> = {};
+        stream.forEach(entry => {
+            counts[entry.moodLabel] = (counts[entry.moodLabel] || 0) + 1;
+        });
+
+        // 가장 높은 카운트를 가진 레이블 반환
+        return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    };
+
+    // 2. 최근 유저들의 프로필 이미지 추출 (중복 제거)
+    const RecentUserAvatars = ({ stream }: { stream: MoodEntry[] }) => {
+        // 실제 DB에 photoURL이 저장되어 있다고 가정 (mood_history 저장 시 포함 필요)
+        const photos = Array.from(new Set(stream.map(s => (s as any).photoURL).filter(Boolean))).slice(0, 3);
+
+        return (
+            <div className="flex -space-x-2">
+                {photos.length > 0 ? (
+                    photos.map((url, i) => (
+                        <img
+                            key={i}
+                            className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm"
+                            src={url as string}
+                            alt="user"
+                        />
+                    ))
+                ) : (
+                    // 데이터가 없을 때 보여줄 기본 아바타
+                    [1, 2, 3].map(i => (
+                        <div key={i} className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-slate-400">person</span>
+                        </div>
+                    ))
+                )}
+                <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 bg-primary text-[9px] flex items-center justify-center font-black text-white shadow-sm">
+                    +{Math.max(0, onlineCount - 3)}
+                </div>
+            </div>
+        );
+    };
+
+    const dominantMood = getDominantMood(moodStream);
 
     useEffect(() => {
         const fetchTrending = async () => {
@@ -22,7 +91,40 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                 setIsLoading(false);
             }
         };
+
+        const updateOnlineCount = () => {
+            const now = new Date();
+            const hour = now.getHours();
+
+            // 2. set weight by time (0~23)
+            // 22~01: peak time (most)
+            // 03~06: lowest time (least)
+            let baseCount = 1200;
+
+            if (hour >= 21 || hour <= 1) {
+                baseCount = 2800; // late night golden time
+            } else if (hour >= 3 && hour <= 7) {
+                baseCount = 450;  // early morning sleeping time
+            } else if (hour >= 11 && hour <= 14) {
+                baseCount = 1800; // lunch break time
+            } else {
+                baseCount = 1100; // general working time
+            }
+
+            setOnlineCount(prev => {
+                // 3. add slight fluctuation (keep fluctuating between -5 and +5)
+                const fluctuation = Math.floor(Math.random() * 11) - 5;
+                const target = baseCount + fluctuation;
+
+                // smoothly approach target value (don't change suddenly)
+                const diff = target - prev;
+                return prev + Math.sign(diff) * Math.min(Math.abs(diff), 3);
+            });
+        };
         fetchTrending();
+        updateOnlineCount();
+        const interval = setInterval(updateOnlineCount, 3000);
+        return () => clearInterval(interval);
     }, []);
 
     const communityMoods = [
@@ -173,7 +275,7 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                     </h2>
                     <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        4,209 ONLINE
+                        {onlineCount.toLocaleString()} ONLINE
                     </div>
                 </div>
 
@@ -181,16 +283,27 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                 <div className="mb-6 p-5 bg-gradient-to-br from-primary/10 to-indigo-500/10 rounded-3xl border border-primary/5">
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Global Vibe Check</span>
-                        {/* 실시간 스트림 전광판: 위로 올라가는 애니메이션 (간단하게 구현 가능) */}
-                        <div className="h-4 overflow-hidden text-[11px] text-slate-400 font-medium">
-                            <motion.div
-                                animate={{ y: [0, -20, -40] }}
-                                transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-                            >
-                                <p>User @k-wave: "Feeling Dreamy ☁️"</p>
-                                <p>User @dev_min: "Just found Joy 🎈"</p>
-                                <p>User @rhythm: "Energetic Beats! 🔥"</p>
-                            </motion.div>
+                        {/* 실시간 전광판 영역 */}
+                        <div className="h-5 overflow-hidden text-[11px] text-slate-500 font-bold bg-white/50 dark:bg-black/20 px-3 rounded-full flex items-center shadow-inner">
+                            <AnimatePresence mode="wait">
+                                {moodStream.length > 0 ? (
+                                    <motion.p
+                                        key={moodStream[currentIndex]?.id}
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        exit={{ y: -20, opacity: 0 }}
+                                        transition={{ duration: 0.5 }}
+                                        className="whitespace-nowrap"
+                                    >
+                                        User @{moodStream[currentIndex].userNickname}:
+                                        <span className="text-primary ml-1">
+                                            "Feeling {moodStream[currentIndex].moodLabel} {getEmoji(moodStream[currentIndex].moodLabel)}"
+                                        </span>
+                                    </motion.p>
+                                ) : (
+                                    <p>Waiting for vibes...</p>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
 
@@ -198,15 +311,20 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                         <div>
                             <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
                                 Most People are <br />
-                                <span className="text-primary underline decoration-primary/30 underline-offset-4">Feeling Joyful</span> ✨
+                                {/* 실시간으로 변하는 감정 문구 */}
+                                <motion.span
+                                    key={dominantMood}
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-primary underline decoration-primary/30 underline-offset-4"
+                                >
+                                    Feeling {dominantMood} {getEmoji(dominantMood)}
+                                </motion.span>
                             </h3>
                         </div>
-                        <div className="flex -space-x-2">
-                            {[1, 2, 3].map((i) => (
-                                <img key={i} className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900"
-                                    src={`https://i.pravatar.cc/100?img=${i + 20}`} alt="user" />
-                            ))}
-                        </div>
+
+                        {/* 사용자 사진 아이콘 영역 (로직 연결) */}
+                        <RecentUserAvatars stream={moodStream} />
                     </div>
                 </div>
 
