@@ -13,6 +13,7 @@ import { analyzeMood } from './services/ai';
 import { auth, googleProvider } from './services/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 import type { AnalysisResult } from './services/ai';
+import toast from 'react-hot-toast';
 
 type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS' | 'FAVORITES' | 'DISCOVER' | 'PROFILE' | 'MIXTAPE';
 
@@ -70,10 +71,28 @@ const App: React.FC = () => {
     setAnalysisResult(null);
   };
 
-  const handleShowFavorites = () => setState('FAVORITES');
+  // const handleShowFavorites = () => setState('FAVORITES');
   const handleShowDiscover = () => setState('DISCOVER');
-  const handleShowProfile = () => setState('PROFILE');
-  const handleShowMixtape = () => setState('MIXTAPE');
+  // const handleShowProfile = () => setState('PROFILE');
+  // const handleShowMixtape = () => setState('MIXTAPE');
+
+  const handleShowMixtape = () => {
+    if (!user) {
+      // 1. 로그인 체크 로직 추가
+      toast.error("Please login to create your Personalized Mixtape!", {
+        icon: '🔒',
+        style: {
+          borderRadius: '12px',
+          background: '#1e1b4b',
+          color: '#fff',
+        },
+      });
+      return; // 로그인이 안 되어 있으면 함수 실행 중단
+    }
+
+    // 2. 로그인된 경우에만 페이지 이동
+    setState('MIXTAPE');
+  };
 
   const handleLogin = async () => {
     try {
@@ -91,31 +110,51 @@ const App: React.FC = () => {
     }
   };
 
+  const handleNavClick = (targetState: AppState) => {
+    const protectedStates: AppState[] = ['FAVORITES', 'PROFILE', 'MIXTAPE'];
+
+    if (protectedStates.includes(targetState) && !user) {
+      // 로그인이 필요한 페이지인데 유저 정보가 없는 경우
+      toast.error("Please login to access this feature!", {
+        icon: '🔒',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+      // 필요하다면 여기서 로그인 팝업을 띄우거나 HOME으로 보낼 수 있습니다.
+      return;
+    }
+
+    setState(targetState);
+  };
+
   const renderBottomNav = () => (
     <div className="flex items-center justify-around border-t border-slate-100 dark:border-white/5 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 pb-8 shrink-0">
       <button
-        onClick={() => setState('HOME')}
+        onClick={() => handleNavClick('HOME')}
         className={`flex flex-col items-center gap-1 transition-colors ${state === 'HOME' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
       >
         <span className={`material-symbols-outlined ${state === 'HOME' ? 'fill-[1]' : ''}`}>home</span>
         <span className="text-[10px] font-bold">Home</span>
       </button>
       <button
-        onClick={handleShowDiscover}
+        onClick={() => handleNavClick('DISCOVER')}
         className={`flex flex-col items-center gap-1 transition-colors ${state === 'DISCOVER' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
       >
         <span className={`material-symbols-outlined ${state === 'DISCOVER' ? 'fill-[1]' : ''}`}>explore</span>
         <span className="text-[10px] font-medium">Discover</span>
       </button>
       <button
-        onClick={handleShowFavorites}
+        onClick={() => handleNavClick('FAVORITES')}
         className={`flex flex-col items-center gap-1 transition-colors ${state === 'FAVORITES' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
       >
         <span className={`material-symbols-outlined ${state === 'FAVORITES' ? 'fill-[1]' : ''}`}>favorite</span>
         <span className="text-[10px] font-medium">Favorites</span>
       </button>
       <button
-        onClick={handleShowProfile}
+        onClick={() => handleNavClick('PROFILE')}
         className={`flex flex-col items-center gap-1 transition-colors ${state === 'PROFILE' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
       >
         <span className={`material-symbols-outlined ${state === 'PROFILE' ? 'fill-[1]' : ''}`}>person</span>
