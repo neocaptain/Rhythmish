@@ -81,26 +81,30 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                     </h2>
                     <button className="text-primary text-sm font-semibold">View All</button>
                 </div>
-                <div className="flex overflow-x-auto pb-4 gap-4 px-6 no-scrollbar snap-x">
+
+                {/* point 1: using px-6 and w-[85vw] (or w-72) to center the items */}
+                <div className="flex overflow-x-auto pb-4 gap-5 px-6 no-scrollbar snap-x snap-mandatory">
                     {isLoading ? (
-                        // Loading Skeletons
                         [1, 2, 3].map((i) => (
-                            <div key={i} className="flex-none w-80 snap-start animate-pulse">
-                                <div className="aspect-video bg-slate-200 dark:bg-slate-800 rounded-xl mb-3"></div>
+                            /* point 2: w-80 -> w-[82vw] (mobile optimization) */
+                            <div key={i} className="flex-none w-[82vw] max-w-sm snap-center animate-pulse">
+                                <div className="aspect-video bg-slate-200 dark:bg-slate-800 rounded-2xl mb-3"></div>
                                 <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-2"></div>
-                                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
                             </div>
                         ))
                     ) : (
                         trendingVideos.map((video) => (
-                            <div key={video.id} className="flex-none w-80 snap-start">
-                                <div className="relative group rounded-xl overflow-hidden mb-3 aspect-video shadow-lg">
+                            /* point 3: using snap-center instead of snap-start to center the items, and w-[82vw] instead of w-80 for mobile optimization */
+                            <div key={video.id} className="flex-none w-[82vw] max-w-sm snap-center">
+                                <div className="relative group rounded-2xl overflow-hidden mb-3 aspect-video shadow-lg">
                                     <img
                                         alt={video.snippet.title}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         src={video.snippet.thumbnails.high.url}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+
+                                    {/* view count badge */}
                                     <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-2 py-1">
                                         <span className="text-[10px] font-bold text-white flex items-center gap-1">
                                             <span className="material-symbols-outlined text-xs text-red-500 fill-1">visibility</span>
@@ -108,10 +112,11 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                                                 ? (parseInt(video.statistics.viewCount) > 1000000
                                                     ? (parseInt(video.statistics.viewCount) / 1000000).toFixed(1) + 'M'
                                                     : (parseInt(video.statistics.viewCount) / 1000).toFixed(0) + 'K')
-                                                : '0'
-                                            }
+                                                : '0'}
                                         </span>
                                     </div>
+
+                                    {/* play button */}
                                     <button
                                         onClick={() => window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank')}
                                         className="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -119,13 +124,21 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                                         <span className="material-symbols-outlined text-3xl fill-1">play_arrow</span>
                                     </button>
                                 </div>
-                                <h3 className="font-bold text-lg leading-tight truncate">{video.snippet.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">
-                                    {video.snippet.channelTitle} • {new Date(video.snippet.publishedAt).toLocaleDateString()}
-                                </p>
+
+                                {/* text area: add some padding for better readability */}
+                                <div className="px-1">
+                                    <h3 className="font-bold text-base leading-tight truncate text-slate-900 dark:text-white">
+                                        {video.snippet.title}
+                                    </h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                                        {video.snippet.channelTitle} • {new Date(video.snippet.publishedAt).toLocaleDateString()}
+                                    </p>
+                                </div>
                             </div>
                         ))
                     )}
+                    {/* point 4: empty div to secure space after the last item (optional) */}
+                    <div className="flex-none w-2"></div>
                 </div>
             </section>
 
@@ -152,32 +165,88 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
 
             {/* Community Moods Section */}
             <section className="mt-4 px-6 pb-8">
+                {/* 헤더 영역 */}
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <span className="text-primary material-symbols-outlined">bubble_chart</span>
                         Real-time Moods
                     </h2>
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        LIVE
+                        4,209 ONLINE
                     </div>
                 </div>
+
+                {/* [구현 1 & 2] 글로벌 무드 집계 및 실시간 스트림 전광판 */}
+                <div className="mb-6 p-5 bg-gradient-to-br from-primary/10 to-indigo-500/10 rounded-3xl border border-primary/5">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Global Vibe Check</span>
+                        {/* 실시간 스트림 전광판: 위로 올라가는 애니메이션 (간단하게 구현 가능) */}
+                        <div className="h-4 overflow-hidden text-[11px] text-slate-400 font-medium">
+                            <motion.div
+                                animate={{ y: [0, -20, -40] }}
+                                transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+                            >
+                                <p>User @k-wave: "Feeling Dreamy ☁️"</p>
+                                <p>User @dev_min: "Just found Joy 🎈"</p>
+                                <p>User @rhythm: "Energetic Beats! 🔥"</p>
+                            </motion.div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                                Most People are <br />
+                                <span className="text-primary underline decoration-primary/30 underline-offset-4">Feeling Joyful</span> ✨
+                            </h3>
+                        </div>
+                        <div className="flex -space-x-2">
+                            {[1, 2, 3].map((i) => (
+                                <img key={i} className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900"
+                                    src={`https://i.pravatar.cc/100?img=${i + 20}`} alt="user" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* [구현 3] 감정별 추천 곡 & 커뮤니티 그리드 */}
                 <div className="grid grid-cols-2 gap-4">
                     {communityMoods.map((mood, idx) => (
                         <motion.div
                             key={idx}
                             whileHover={{ y: -5 }}
-                            className="relative aspect-square rounded-xl overflow-hidden group shadow-md"
+                            whileTap={{ scale: 0.98 }}
+                            className="relative aspect-[4/5] rounded-2xl overflow-hidden group shadow-lg"
                         >
-                            <img alt={mood.title} className="w-full h-full object-cover" src={mood.image} />
-                            <div className={`absolute inset-0 bg-gradient-to-br ${mood.grad}`}></div>
+                            {/* 배경 이미지 및 그라데이션 */}
+                            <img alt={mood.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={mood.image} />
+                            <div className={`absolute inset-0 bg-gradient-to-b ${mood.grad} opacity-80`}></div>
                             <div className="absolute inset-0 p-4 flex flex-col justify-between">
-                                <span className="self-start px-2 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[10px]">person</span> {mood.listeners} listening
-                                </span>
-                                <div>
-                                    <h3 className="text-white font-bold text-lg leading-tight">{mood.title}</h3>
-                                    <p className="text-white/70 text-[10px] uppercase font-bold tracking-wider">{mood.desc}</p>
+                                {/* 상단: 리스너 수 */}
+                                <div className="flex justify-between items-start">
+                                    <span className="px-2 py-1 bg-black/20 backdrop-blur-md rounded-full text-[9px] font-bold text-white flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[10px] fill-[1]">group</span> {mood.listeners}
+                                    </span>
+                                </div>
+
+                                {/* 하단: 감정 타이틀 및 현재 추천 곡 (구현 3의 핵심) */}
+                                <div className="space-y-2">
+                                    <div>
+                                        <h3 className="text-white font-black text-xl leading-tight">{mood.title}</h3>
+                                        <p className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{mood.desc}</p>
+                                    </div>
+
+                                    {/* 감정별 현재 1위 곡 미니 노출 */}
+                                    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-2 border border-white/10 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-300 shrink-0 overflow-hidden">
+                                            <img src={`https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100`} alt="song" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[9px] font-black text-white truncate">Permission to Dance</p>
+                                            <p className="text-[8px] text-white/60 truncate">BTS</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>

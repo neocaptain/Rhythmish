@@ -78,7 +78,7 @@ const App: React.FC = () => {
 
   const handleShowMixtape = () => {
     if (!user) {
-      // 1. 로그인 체크 로직 추가
+      // 1. add login check logic
       toast.error("Please login to create your Personalized Mixtape!", {
         icon: '🔒',
         style: {
@@ -87,10 +87,10 @@ const App: React.FC = () => {
           color: '#fff',
         },
       });
-      return; // 로그인이 안 되어 있으면 함수 실행 중단
+      return; // if no login, stop the function
     }
 
-    // 2. 로그인된 경우에만 페이지 이동
+    // 2. only if login, move to the page
     setState('MIXTAPE');
   };
 
@@ -114,7 +114,7 @@ const App: React.FC = () => {
     const protectedStates: AppState[] = ['FAVORITES', 'PROFILE', 'MIXTAPE'];
 
     if (protectedStates.includes(targetState) && !user) {
-      // 로그인이 필요한 페이지인데 유저 정보가 없는 경우
+      // page access without login
       toast.error("Please login to access this feature!", {
         icon: '🔒',
         style: {
@@ -123,7 +123,7 @@ const App: React.FC = () => {
           color: '#fff',
         },
       });
-      // 필요하다면 여기서 로그인 팝업을 띄우거나 HOME으로 보낼 수 있습니다.
+      // if needed, show login popup or send to HOME
       return;
     }
 

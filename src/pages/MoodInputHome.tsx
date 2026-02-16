@@ -112,7 +112,7 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
                 </div>
 
                 {/* Divider */}
-                <div className="flex items-center gap-3 py-2">
+                <div className="flex items-center gap-3 py-1">
                     <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10"></div>
                     <span className="text-slate-400 text-xs font-bold uppercase">OR</span>
                     <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10"></div>
