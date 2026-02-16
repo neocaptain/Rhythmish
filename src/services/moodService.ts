@@ -116,6 +116,7 @@ export const saveMoodResult = async (params: {
             userInput: params.userInput,
             imageUrl: imageUrl,       // public URL (for display)
             storagePath: storagePath, // storage path (for deletion)
+            photoURL: user?.photoURL || "",
             createdAt: serverTimestamp()
         });
 
