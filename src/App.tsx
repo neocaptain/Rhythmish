@@ -10,7 +10,8 @@ import Discover from './pages/Discover';
 import Profile from './pages/Profile';
 import PersonalizedMixtape from './pages/PersonalizedMixtape';
 import { analyzeMood } from './services/ai';
-import { auth } from './services/firebase';
+import { auth, googleProvider } from './services/firebase';
+import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 import type { AnalysisResult } from './services/ai';
 
 type AppState = 'HOME' | 'ANALYSIS' | 'RESULT' | 'RECOMMENDATIONS' | 'FAVORITES' | 'DISCOVER' | 'PROFILE' | 'MIXTAPE';
@@ -19,8 +20,14 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>('HOME');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
-  const user = auth.currentUser;
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const [lastInputType, setLastInputType] = useState<"text" | "gallery" | "camera">("text");
   const [lastInputText, setLastInputText] = useState<string>("");
@@ -68,6 +75,22 @@ const App: React.FC = () => {
   const handleShowProfile = () => setState('PROFILE');
   const handleShowMixtape = () => setState('MIXTAPE');
 
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   const renderBottomNav = () => (
     <div className="flex items-center justify-around border-t border-slate-100 dark:border-white/5 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 pb-8 shrink-0">
       <button
@@ -109,12 +132,28 @@ const App: React.FC = () => {
       {/* 2. top area: only show when HOME, fixed height(shrink-0) */}
       {state === 'HOME' && (
         <header className="px-6 pt-6 pb-2 flex justify-between items-center shrink-0 z-50">
-          <h1 className="text-xl font-black tracking-tighter text-primary">Rhythmish</h1>
           <div className="flex items-center gap-3">
+            <div className="size-10 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/20">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt="User" className="aspect-square size-full object-cover" />
+              ) : (
+                <div className="bg-slate-200 dark:bg-slate-700 size-full flex items-center justify-center">
+                  <span className="material-symbols-outlined">person</span>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{user ? "Welcome back" : "Welcome"}</p>
+              <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight">{user ? `Hi ${user.displayName?.split(' ')[0]} 👋` : "Guest"}</h2>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             {user ? (
-              <img src={user.photoURL || ''} alt="Profile" className="w-8 h-8 rounded-full border border-primary/20" />
+              <button onClick={handleLogout} className="flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 transition-colors">
+                <span className="material-symbols-outlined text-[20px]">logout</span>
+              </button>
             ) : (
-              <button className="text-sm font-bold text-primary">Login</button>
+              <button onClick={handleLogin} className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">Login</button>
             )}
           </div>
         </header>

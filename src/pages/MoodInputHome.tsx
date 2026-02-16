@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { auth, googleProvider } from '../services/firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 
 interface MoodInputHomeProps {
     onAnalyze: (text: string, imageFile?: File, type?: "text" | "gallery" | "camera") => void;
@@ -9,7 +7,6 @@ interface MoodInputHomeProps {
 
 const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
     const [text, setText] = useState('');
-    const [user, setUser] = useState<User | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isListening, setIsListening] = useState(false);
@@ -17,14 +14,6 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null);    // for gallery
     const cameraInputRef = useRef<HTMLInputElement>(null);  // for camera
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            console.log("Auth state changed:", currentUser?.email);
-            setUser(currentUser);
-        });
-        return () => unsubscribe();
-    }, []);
 
     // handlers
     const handleGalleryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,22 +39,6 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
 
             // immediately pass to analysis page with "camera" type
             onAnalyze(text, file, "camera");
-        }
-    };
-
-    const handleLogin = async () => {
-        try {
-            await signInWithPopup(auth, googleProvider);
-        } catch (error) {
-            console.error("Login failed:", error);
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-        } catch (error) {
-            console.error("Logout failed:", error);
         }
     };
 
@@ -104,33 +77,6 @@ const MoodInputHome: React.FC<MoodInputHomeProps> = ({ onAnalyze }) => {
 
     return (
         <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
-            {/* Top App Bar */}
-            <div className="flex items-center p-6 pb-2 justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="size-10 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/20">
-                        {user?.photoURL ? (
-                            <img src={user.photoURL} alt="User" className="aspect-square size-full object-cover" />
-                        ) : (
-                            <div className="bg-slate-200 dark:bg-slate-700 size-full flex items-center justify-center">
-                                <span className="material-symbols-outlined">person</span>
-                            </div>
-                        )}
-                    </div>
-                    <div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{user ? "Welcome back" : "Welcome"}</p>
-                        <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight">{user ? `Hi ${user.displayName?.split(' ')[0]} 👋` : "Guest"}</h2>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {user ? (
-                        <button onClick={handleLogout} className="flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">logout</span>
-                        </button>
-                    ) : (
-                        <button onClick={handleLogin} className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">Login</button>
-                    )}
-                </div>
-            </div>
 
             {/* Hero Section */}
             <div className="px-6 pt-8 pb-4 text-left">
