@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -49,6 +50,10 @@ const App: React.FC = () => {
     try {
       const result = await analyzeMood(text, imageFile);
       setAnalysisResult(result);
+
+      if (result.recommendations) {
+        setRecommendations(result.recommendations);
+      }
     } catch (err) {
       console.error(err);
       setError("AI analysis failed. Please try again.");
@@ -239,6 +244,7 @@ const App: React.FC = () => {
             <motion.div key="recommendations" className="min-h-full">
               <RecommendedSongs
                 result={analysisResult}
+                songs={recommendations}
                 onBack={() => setState('RESULT')}
                 onRefresh={handleBackToHome}
               />

@@ -1,19 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AnalysisResult, SongRecommendation } from '../services/ai';
 import { searchYouTubeVideo } from '../services/youtube';
 import LikeButton from '../components/LikeButton';
+import { db, auth } from '../services/firebase';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+
+interface Song {
+    id: string;
+    title: string;
+    artist: string;
+    cover: string;
+    thumbnail: string;
+}
 
 interface RecommendedSongsProps {
     result: AnalysisResult;
+    songs: Song[];
     onBack: () => void;
     onRefresh: () => void;
 }
 
-const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, onBack, onRefresh }) => {
+const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, songs, onBack, onRefresh }) => {
     const { recommendations, headline } = result;
     const [selectedSong, setSelectedSong] = useState<SongRecommendation | null>(null);
     const [augmentedSongs, setAugmentedSongs] = useState<SongRecommendation[]>(recommendations);
+    // 1. ref to prevent duplicate saving
+    const hasSavedToHistory = useRef(false);
+
+    useEffect(() => {
+        const saveToMoodHistory = async () => {
+            const user = auth.currentUser;
+
+            // save condition: not saved yet, and songs are loaded
+            if (hasSavedToHistory.current || !songs || songs.length === 0) return;
+
+            try {
+                // 2. data structure connected to Discover page's 'Trending Track' logic
+                await addDoc(collection(db, "mood_history"), {
+                    uid: user?.uid || "anonymous",
+                    userNickname: user?.displayName || "Anonymous",
+                    photoURL: user?.photoURL || "",
+                    moodLabel: result.emotions[0].label, // analyzed emotion
+
+                    // 3. key data for trend aggregation (first recommended song)
+                    trendingTrack: {
+                        id: songs[0].id || 'unknown',
+                        title: songs[0].title,
+                        artist: songs[0].artist,
+                        cover: songs[0].cover || songs[0].thumbnail // check field name
+                    },
+
+                    timestamp: serverTimestamp(),
+                });
+
+                hasSavedToHistory.current = true;
+                console.log("✅ Mood & Trending data saved to Firestore");
+            } catch (error) {
+                console.error("❌ Error saving to mood_history:", error);
+            }
+        };
+
+        saveToMoodHistory();
+    }, [songs, result]); // when the song list or result changes
 
     useEffect(() => {
         const augmentData = async () => {
@@ -61,8 +110,8 @@ const RecommendedSongs: React.FC<RecommendedSongsProps> = ({ result, onBack, onR
                     <span className="material-symbols-outlined text-[24px]">arrow_back</span>
                 </button>
                 <h1 className="text-lg font-semibold tracking-tight">Sounds for your Mood</h1>
-                <button className="w-10 h-10 flex items-center justify-end text-slate-700 dark:text-white">
-                    <span className="material-symbols-outlined text-[24px]">tune</span>
+                <button onClick={onRefresh} className="w-10 h-10 rounded-full flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined">refresh</span>
                 </button>
             </header>
 

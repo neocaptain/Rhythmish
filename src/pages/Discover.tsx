@@ -3,27 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getTrendingMusic, getBrowserRegionCode } from '../services/youtube';
 import { useMoodStream } from '../hooks/useMoodStream';
 import type { MoodEntry } from '../hooks/useMoodStream';
+import MoodTrendCard from '../components/MoodTrendCard';
+import { useTrendingTrack } from '../hooks/useTrendingTrack';
 
 interface DiscoverProps {
     onShowMixtape: () => void;
 }
 
 const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
+    // --------------------------------------------------------
+    // 1. 상태 및 데이터 훅 선언
+    // --------------------------------------------------------
     const [trendingVideos, setTrendingVideos] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     // 1. realtime use count display function : set default value 1,200
     const [onlineCount, setOnlineCount] = useState(1240);
-    const moodStream = useMoodStream();
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // timer: switch to next phrase every 3~4 seconds
-    useEffect(() => {
-        if (moodStream.length === 0) return;
-        const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % moodStream.length);
-        }, 4000);
-        return () => clearInterval(timer);
-    }, [moodStream]);
+    const moodStream = useMoodStream();
+
+    // --------------------------------------------------------
+    // 2. 헬퍼 함수 정의 (호출보다 먼저 정의하는 것이 좋습니다)
+    // --------------------------------------------------------
+    const getDominantMood = (stream: MoodEntry[]) => {
+        if (stream.length === 0) return "Mysterious";
+        const counts: Record<string, number> = {};
+        stream.forEach(entry => {
+            counts[entry.moodLabel] = (counts[entry.moodLabel] || 0) + 1;
+        });
+        return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    };
 
     // mood-label emoji matching function
     const getEmoji = (label: string) => {
@@ -33,51 +42,31 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
         return emojis[label] || '✨';
     };
 
-    // 1. 가장 많이 느끼는 감정 집계 함수
-    const getDominantMood = (stream: MoodEntry[]) => {
-        if (stream.length === 0) return "Mysterious";
-
-        const counts: Record<string, number> = {};
-        stream.forEach(entry => {
-            counts[entry.moodLabel] = (counts[entry.moodLabel] || 0) + 1;
-        });
-
-        // 가장 높은 카운트를 가진 레이블 반환
-        return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-    };
-
-    // 2. 최근 유저들의 프로필 이미지 추출 (중복 제거)
-    const RecentUserAvatars = ({ stream }: { stream: MoodEntry[] }) => {
-        // 실제 DB에 photoURL이 저장되어 있다고 가정 (mood_history 저장 시 포함 필요)
-        const photos = Array.from(new Set(stream.map(s => (s as any).photoURL).filter(Boolean))).slice(0, 3);
-
-        return (
-            <div className="flex -space-x-2">
-                {photos.length > 0 ? (
-                    photos.map((url, i) => (
-                        <img
-                            key={i}
-                            className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm"
-                            src={url as string}
-                            alt="user"
-                        />
-                    ))
-                ) : (
-                    // 데이터가 없을 때 보여줄 기본 아바타
-                    [1, 2, 3].map(i => (
-                        <div key={i} className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[14px] text-slate-400">person</span>
-                        </div>
-                    ))
-                )}
-                <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 bg-primary text-[9px] flex items-center justify-center font-black text-white shadow-sm">
-                    +{Math.max(0, onlineCount - 3)}
-                </div>
-            </div>
-        );
-    };
-
+    // --------------------------------------------------------
+    // 3. 파생 상태 계산 (중복 선언 해결)
+    // --------------------------------------------------------
     const dominantMood = getDominantMood(moodStream);
+    const realTrendingTrack = useTrendingTrack(dominantMood);
+    // default value when no data
+    const defaultTrack = {
+        title: "Discovering...",
+        artist: "Rhythmish Trend",
+        cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300"
+    };
+
+    const trackToShow = realTrendingTrack || defaultTrack;
+
+    // --------------------------------------------------------
+    // 4. Effects (타이머 및 API 호출)
+    // --------------------------------------------------------    
+    // timer: switch to next phrase every 3~4 seconds
+    useEffect(() => {
+        if (moodStream.length === 0) return;
+        const timer = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % moodStream.length);
+        }, 4000);
+        return () => clearInterval(timer);
+    }, [moodStream]);
 
     useEffect(() => {
         const fetchTrending = async () => {
@@ -127,6 +116,40 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
         return () => clearInterval(interval);
     }, []);
 
+    // --------------------------------------------------------
+    // 5. 하위 컴포넌트 (내부 렌더용)
+    // --------------------------------------------------------
+    // 2. 최근 유저들의 프로필 이미지 추출 (중복 제거)
+    const RecentUserAvatars = ({ stream }: { stream: MoodEntry[] }) => {
+        // 실제 DB에 photoURL이 저장되어 있다고 가정 (mood_history 저장 시 포함 필요)
+        const photos = Array.from(new Set(stream.map(s => (s as any).photoURL).filter(Boolean))).slice(0, 3);
+
+        return (
+            <div className="flex -space-x-2">
+                {photos.length > 0 ? (
+                    photos.map((url, i) => (
+                        <img
+                            key={i}
+                            className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm"
+                            src={url as string}
+                            alt="user"
+                        />
+                    ))
+                ) : (
+                    // 데이터가 없을 때 보여줄 기본 아바타
+                    [1, 2, 3].map(i => (
+                        <div key={i} className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[14px] text-slate-400">person</span>
+                        </div>
+                    ))
+                )}
+                <div className="w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 bg-primary text-[9px] flex items-center justify-center font-black text-white shadow-sm">
+                    +{Math.max(0, onlineCount - 3)}
+                </div>
+            </div>
+        );
+    };
+
     const communityMoods = [
         // ... (rest of communityMoods remains)
         {
@@ -159,6 +182,9 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
         }
     ];
 
+    // --------------------------------------------------------
+    // 6. 최종 렌더링
+    // --------------------------------------------------------
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 overflow-y-auto no-scrollbar pb-24">
             {/* Top Navigation Bar */}
@@ -331,43 +357,7 @@ const Discover: React.FC<DiscoverProps> = ({ onShowMixtape }) => {
                 {/* [구현 3] 감정별 추천 곡 & 커뮤니티 그리드 */}
                 <div className="grid grid-cols-2 gap-4">
                     {communityMoods.map((mood, idx) => (
-                        <motion.div
-                            key={idx}
-                            whileHover={{ y: -5 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="relative aspect-[4/5] rounded-2xl overflow-hidden group shadow-lg"
-                        >
-                            {/* 배경 이미지 및 그라데이션 */}
-                            <img alt={mood.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={mood.image} />
-                            <div className={`absolute inset-0 bg-gradient-to-b ${mood.grad} opacity-80`}></div>
-                            <div className="absolute inset-0 p-4 flex flex-col justify-between">
-                                {/* 상단: 리스너 수 */}
-                                <div className="flex justify-between items-start">
-                                    <span className="px-2 py-1 bg-black/20 backdrop-blur-md rounded-full text-[9px] font-bold text-white flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[10px] fill-[1]">group</span> {mood.listeners}
-                                    </span>
-                                </div>
-
-                                {/* 하단: 감정 타이틀 및 현재 추천 곡 (구현 3의 핵심) */}
-                                <div className="space-y-2">
-                                    <div>
-                                        <h3 className="text-white font-black text-xl leading-tight">{mood.title}</h3>
-                                        <p className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{mood.desc}</p>
-                                    </div>
-
-                                    {/* 감정별 현재 1위 곡 미니 노출 */}
-                                    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-2 border border-white/10 flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-slate-300 shrink-0 overflow-hidden">
-                                            <img src={`https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100`} alt="song" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="text-[9px] font-black text-white truncate">Permission to Dance</p>
-                                            <p className="text-[8px] text-white/60 truncate">BTS</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
+                        <MoodTrendCard key={idx} mood={mood} idx={idx} />
                     ))}
                 </div>
             </section>
